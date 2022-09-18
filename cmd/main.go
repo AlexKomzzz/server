@@ -1,20 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-func sayhello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Привет!")
+func sayhello(c *gin.Context) {
+	c.JSON(http.StatusOK, "Привет!")
 }
 
 func main() {
 
-	http.HandleFunc("/", sayhello)           // Устанавливаем роутер
-	err := http.ListenAndServe(":8080", nil) // устанавливаем порт веб-сервера
+	mux := gin.New()
+
+	mux.GET("/", sayhello)
+
+	err := mux.Run(":8080") // устанавливаем порт веб-сервера
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
+
 }
