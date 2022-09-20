@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  nginx:
+    container_name: nginx
+    hostname: nginx
+    image: nginx:latest
+    volumes:
+      #- ./var/log/nginx:/var/log/nginx #log файлы.
+      - /home/alex/server/etc/nginx/conf:/etc/nginx/conf.d:ro #Конфигурация nginx.
+      #- ./etc/nginx/sites-enabled:/etc/nginx/sites-enabled:ro #Конфигурация площадок.
+      #- ./volumes/etc/nginx/ssl:/etc/nginx/ssl:ro #сертификаты
+      #- ./etc/www/alexkomzzz.ml:/var/www/alexkomzzz.ml #Домашняя директория
+    ports:
+      - "80:80"
+      - "443:443"
+    links:
+      - go-api
+    restart:
+      always
+    networks:
+      net-server:
+        ipv4_address: 172.16.1.4  
+  go-api:
+    build:
+      context: .
+      dockerfile: dockerfile.multi
+    container_name: go-api
+    hostname: go-api
+    ports:
+      - 8080:8080
+    restart: always
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      net-server:
+        ipv4_address: 172.16.1.2
+  
+networks:
+  net-server:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.1.0/24
