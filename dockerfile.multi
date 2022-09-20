@@ -11,10 +11,8 @@ RUN go mod download
 
 COPY ./ ./
 
-RUN CGO_ENABLED=0 go build -o ./bin/server cmd/server/*.go
-RUN CGO_ENABLED=0 go build -o ./bin/client cmd/client/*.go
-# RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/server cmd/server/*.go
-# RUN GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o ./bin/client cmd/client/*.go
+RUN CGO_ENABLED=0 go build -o ./srv cmd/*.go
+
 
 ## Deploy
 
@@ -24,9 +22,9 @@ FROM scratch
 
 WORKDIR /
 
-COPY --from=build ./library-app/bin/ /
+COPY --from=build ./server /
 
 EXPOSE 8080
 
 # CMD ["/server"]
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/srv"]
