@@ -4,11 +4,26 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-var clients map[*websocket.Conn]bool
+type ConnectUser struct {
+	Websocket *websocket.Conn
+	ClientIP  string
+}
+
+func newConnectUser(ws *websocket.Conn, clientIP string) *ConnectUser {
+	return &ConnectUser{
+		Websocket: ws,
+		ClientIP:  clientIP,
+	}
+}
+
+var clients = make(map[ConnectUser]int)
+
+//var clients map[*websocket.Conn]bool
 
 var upgrader = websocket.Upgrader{
 	// CheckOrigin: func(r *http.Request) bool {
@@ -19,57 +34,59 @@ var upgrader = websocket.Upgrader{
 }
 
 type Server struct {
-	clients       map[*websocket.Conn]bool
-	handleMessage func(message []byte)
+	clients map[*websocket.Conn]bool
+	//handleMessage func(message []byte)
 }
 
-func StartServer(handleMessage func(message []byte)) *Server {
-	server := &Server{
-		clients:       make(map[*websocket.Conn]bool),
-		handleMessage: handleMessage,
-	}
-
-	http.HandleFunc("/", server.echo)
-	go http.ListenAndServe(":8080", nil)
-
-	return server
+func (server *Server) StartServer(handleMessage func(message []byte)) {
+	http.Handle("/", http.FileServer(http.Dir("./web")))
+	// http.HandleFunc("/", server.IndexHandler)
+	http.HandleFunc("/ws", server.WebsocketHandler)
+	http.ListenAndServe("localhost:8080", nil)
 }
 
-func (server *Server) echo(w http.ResponseWriter, r *http.Request) {
+// func (server *Server) IndexHandler(w http.ResponseWriter, r *http.Request) {
+// 	tmpl, _ := template.ParseFiles("templates/index.html")
+// 	if err := tmpl.Execute(w, nil); err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 	}
+// }
+
+func (server *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("error connect: ", err)
+		log.Fatalln("error connect: ", err)
 	}
 	defer conn.Close()
 
 	log.Println("Client connected:", conn.RemoteAddr().String())
-
+	var socketClient *ConnectUser = newConnectUser(conn, conn.RemoteAddr().String())
 	// сохраняем соединение
-	clients[conn] = true
-	defer delete(clients, conn)
+	//clients[conn] = true
+	clients[*socketClient] = 0
+	defer delete(clients, *socketClient)
 
 	for {
 		mtype, message, err := conn.ReadMessage() // читаем сообщение
 		if err != nil || mtype == websocket.CloseMessage {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("error read message: %v", err)
+				log.Fatalf("error read message: %v", err)
 			}
 			break
 		}
 
-		//go server.MyWriteMessage(message)
-		go server.handleMessage(message)
+		timeMessage := time.Now().Format(time.Stamp)
+		message = []byte(fmt.Sprintf("%s %s\t\t%s", socketClient.ClientIP, timeMessage, string(message)))
+
+		go server.MyWriteMessage(message) // отправляем сообщение
+		// go messageHandler(message) // выводим сообщение
+		messageHandler(message)
 	}
 }
 
-// func (server *Server) MyWriteMessage(message []byte, authorMessage *websocket.Conn) {
 func (server *Server) MyWriteMessage(message []byte) {
-	for conn := range clients {
-		// проверка, чтобы не отправлять это сообщение его автору
-		// if conn == authorMessage {
-		// 	continue
-		// }
-		conn.WriteMessage(websocket.TextMessage, message)
+	for user := range clients {
+		user.Websocket.WriteMessage(websocket.TextMessage, message)
 	}
 }
 
@@ -78,11 +95,14 @@ func messageHandler(message []byte) {
 }
 
 func main() {
-
-	server := StartServer(messageHandler)
-
-	for {
-		server.MyWriteMessage([]byte("Hello"))
+	server := &Server{
+		clients: make(map[*websocket.Conn]bool),
+		//handleMessage: handleMessage,
 	}
+	server.StartServer(messageHandler)
+
+	// for {
+	//server.MyWriteMessage([]byte("Hello"))
+	// }
 
 }
