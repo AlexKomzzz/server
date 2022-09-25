@@ -50,8 +50,6 @@ func (srv *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 			delete(srv.clients, conn)
 			break
 		}
-		// Send the newly received message to the broadcast channel
-		//broadcast <- msg
 
 		// mtype, message, err := conn.ReadMessage() // читаем сообщение
 		// if err != nil || mtype == websocket.CloseMessage {
