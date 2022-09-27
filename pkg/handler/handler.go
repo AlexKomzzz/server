@@ -1,8 +1,19 @@
 package handler
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/AlexKomzzz/server/pkg/service"
+	"github.com/gin-gonic/gin"
+)
 
-func InitRouter() {
+type Handler struct {
+	service *service.Service
+}
+
+func NewHandler(service *service.Service) *Handler {
+	return &Handler{service: service}
+}
+
+func (h *Handler) InitRouter() {
 	mux := gin.New()
 	mux.Group("/auth")
 	{
