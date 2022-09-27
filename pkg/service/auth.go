@@ -7,7 +7,7 @@ import (
 
 const SOLT = "bt,&#Rkm54FS#$WR2@#nasf!dsfre%"
 
-func GeneratePasswordHash(password string) (string, error) {
+func generatePasswordHash(password string) (string, error) {
 	hash := sha1.New()
 	_, err := hash.Write([]byte(password))
 	if err != nil {
