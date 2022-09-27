@@ -7,6 +7,8 @@ new Vue({
         chatContent: '', // A running list of chat messages displayed on the screen
         email: null, // Email address used for grabbing an avatar
         username: null, // Our username
+        password: '',
+        time: null,
         joined: false // True if email and username have been filled in
     },
 
@@ -15,11 +17,17 @@ new Vue({
         this.ws = new WebSocket('ws://' + window.location.host + '/ws');
         this.ws.addEventListener('message', function(e) {
             var msg = JSON.parse(e.data);
-            self.chatContent += '<div class="chip">'
-                    + '<img src="' + self.gravatarURL(msg.email) + '">' // Avatar
+            self.chatContent += 
+             '<div class="chip">'
+            //         // + '<img src="' + self.gravatarURL(msg.email) + '">' // Avatar
                     + msg.username
                 + '</div>'
-                + emojione.toImage(msg.message) + '<br/>'; // Parse emojis
+                //+ emojione.toImage(msg.message) 
+                + msg.time
+                + msg.message
+
+             + '<br/>'; // Parse emojis
+
 
             var element = document.getElementById('chat-messages');
             element.scrollTop = element.scrollHeight; // Auto scroll to the bottom
@@ -33,6 +41,7 @@ new Vue({
                     JSON.stringify({
                         email: this.email,
                         username: this.username,
+                        password: this.password,
                         message: $('<p>').html(this.newMsg).text() // Strip out html
                     }
                 ));
@@ -51,11 +60,12 @@ new Vue({
             }
             this.email = $('<p>').html(this.email).text();
             this.username = $('<p>').html(this.username).text();
+            this.password = $('<p>').html(this.password).text();
             this.joined = true;
         },
 
-        gravatarURL: function(email) {
-            return 'http://www.gravatar.com/avatar/' + CryptoJS.MD5(email);
-        }
+        // gravatarURL: function(email) {
+        //     return 'http://www.gravatar.com/avatar/' + CryptoJS.MD5(email);
+        // }
     }
 });

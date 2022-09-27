@@ -73,7 +73,6 @@ func (srv *Server) MyWriteMessage(msg Message) {
 	// msg := <-broadcast
 	// отправим сообщение каждому подключенному клиенту
 	for client := range srv.clients {
-		log.Println("write")
 		err := client.WriteJSON(msg)
 		if err != nil {
 			log.Printf("error: %v", err)
