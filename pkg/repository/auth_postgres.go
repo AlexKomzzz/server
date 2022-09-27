@@ -2,20 +2,19 @@ package repository
 
 import (
 	chat "github.com/AlexKomzzz/server"
-	"github.com/jmoiron/sqlx"
 )
 
-type AuthPostgres struct {
-	db *sqlx.DB
-}
+// type AuthPostgres struct {
+// 	db *sqlx.DB
+// }
 
-func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
-	return &AuthPostgres{db: db}
-}
+// func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
+// 	return &AuthPostgres{db: db}
+// }
 
 // создадим пользователя в БД
 // необходимо передать структуру User с зашифрованным паролем
-func (r *AuthPostgres) createUser(user chat.User) (int, error) {
+func (r *Repository) CreateUser(user chat.User) (int, error) {
 
 	query := "INSERT INTO (username, email, passwod_hash) VALUES ($1, $2, $3) RETURN id"
 
