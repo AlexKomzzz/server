@@ -1,4 +1,12 @@
 
+## Описание
+  websocket chat:
+  1. авторизация и аутентификация по http запросам 
+  2. создание вебсокет соединения клиент-сервер
+  3. создание чата с пользователем или открыть существующий
+
+## Docker
+
 создание тома:
 
 docker volume create --driver local \
@@ -24,3 +32,13 @@ ln -s /etc/nginx/sites-available/alexkomzzz.ml.conf /etc/nginx/sites-enabled/
 
 
 /usr/share/nginx/html
+
+
+
+## Структура БД
+
+1 таблица: Users
+  id, username, email, password_hash
+
+2 таблица: history[id_1_user][id_2_user] - для каждого нового диалога создается новая таблица
+  data, times, username, message

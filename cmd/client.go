@@ -8,6 +8,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Client struct {
+	clients map[*websocket.Conn]bool
+}
+
 // объект сообщения
 type Message struct {
 	Email    string `json:"email"`
@@ -16,8 +20,6 @@ type Message struct {
 	Message  string `json:"message"`
 	Time     string `json:"time"`
 }
-
-//var clients map[*websocket.Conn]bool
 
 var upgrader = websocket.Upgrader{
 	// CheckOrigin: func(r *http.Request) bool {
@@ -28,7 +30,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
-func (srv *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+func (clnt *Client) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalln("error connect: ", err)
@@ -38,8 +40,8 @@ func (srv *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Client connected:", conn.RemoteAddr().String())
 	//var socketClient *ConnectUser = newConnectUser(conn, conn.RemoteAddr().String())
 	// сохраняем соединение
-	srv.clients[conn] = true
-	defer delete(srv.clients, conn)
+	clnt.clients[conn] = true
+	defer delete(clnt.clients, conn)
 
 	for {
 		var msg Message
@@ -47,7 +49,7 @@ func (srv *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(srv.clients, conn)
+			delete(clnt.clients, conn)
 			break
 		}
 
@@ -61,23 +63,23 @@ func (srv *Server) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		msg.Time = time.Now().Format(time.Stamp)
 
-		go srv.MyWriteMessage(msg) // отправляем сообщение
+		go clnt.MyWriteMessage(msg) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение
 		messageHandler(msg.Message)
 	}
 }
 
-func (srv *Server) MyWriteMessage(msg Message) {
+func (clnt *Client) MyWriteMessage(msg Message) {
 
 	// Grab the next message from the broadcast channel
 	// msg := <-broadcast
 	// отправим сообщение каждому подключенному клиенту
-	for client := range srv.clients {
+	for client := range clnt.clients {
 		err := client.WriteJSON(msg)
 		if err != nil {
 			log.Printf("error: %v", err)
 			client.Close()
-			delete(srv.clients, client)
+			delete(clnt.clients, client)
 		}
 	}
 

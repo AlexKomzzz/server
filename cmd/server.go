@@ -12,8 +12,9 @@ import (
 )
 
 type Server struct {
-	db      *sqlx.DB
-	clients map[*websocket.Conn]bool
+	*sqlx.DB
+	*Client
+	//clients map[*websocket.Conn]bool
 
 	//handleMessage func(message []byte)
 }
@@ -65,7 +66,11 @@ func main() {
 	defer db.Close()
 
 	server := &Server{
-		clients: make(map[*websocket.Conn]bool),
+		db,
+		&Client{
+			clients: make(map[*websocket.Conn]bool),
+		},
+		//clients: make(map[*websocket.Conn]bool),
 		//handleMessage: handleMessage,
 	}
 	server.StartServer()
