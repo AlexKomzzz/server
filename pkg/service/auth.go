@@ -21,8 +21,16 @@ func generatePasswordHash(password string) (string, error) {
 // функция создания Пользователя
 // возвращяем true, если пользователь создан
 func (service *Service) CreateUser(user chat.User) (int, error) {
-
-	// Необходимо захэшить пароль!!!!!
+	var err error
+	// захешим пароль
+	user.Password, err = generatePasswordHash(user.Password)
+	if err != nil {
+		return 0, err
+	}
 
 	return service.repos.CreateUser(user)
+}
+
+func (service *Service) GenerateToken(email, password string) (string, error) {
+	return "", nil
 }

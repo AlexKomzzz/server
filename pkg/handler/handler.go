@@ -17,7 +17,7 @@ func (h *Handler) InitRouter() {
 	mux := gin.New()
 	mux.Group("/auth")
 	{
-		mux.POST("/sign-up", signUp)
-		mux.POST("/sign-in", signIn)
+		mux.POST("/sign-up", h.signUp)
+		mux.POST("/sign-in", h.signIn)
 	}
 }
