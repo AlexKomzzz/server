@@ -2,22 +2,35 @@ package handler
 
 import (
 	"github.com/AlexKomzzz/server/pkg/service"
+	"github.com/AlexKomzzz/server/pkg/webclient"
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	service *service.Service
+	service   *service.Service
+	webClient *webclient.WebClient
 }
 
-func NewHandler(service *service.Service) *Handler {
-	return &Handler{service: service}
-}
-
-func (h *Handler) InitRouter() {
-	mux := gin.New()
-	mux.Group("/auth")
-	{
-		mux.POST("/sign-up", h.signUp)
-		mux.POST("/sign-in", h.signIn)
+func NewHandler(service *service.Service, webClient *webclient.WebClient) *Handler {
+	return &Handler{
+		service:   service,
+		webClient: webClient,
 	}
+}
+
+func (h *Handler) InitRouter() *gin.Engine {
+	mux := gin.New()
+	auth := mux.Group("/auth")
+	{
+		auth.POST("/sign-up", h.signUp)
+		auth.POST("/sign-in", h.signIn)
+	}
+
+	// открытие websocket
+	chat := mux.Group("/chat", h.userIdentity)
+	{
+		chat.POST("/").Static("/web", "./web")
+	}
+
+	return mux
 }

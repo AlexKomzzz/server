@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	chat "github.com/AlexKomzzz/server"
@@ -43,7 +44,7 @@ func (h *Handler) signIn(c *gin.Context) {
 	// парсим тело запроса в структуру пользователя
 	err := c.BindJSON(&user)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, "invalid input body")
+		c.AbortWithStatusJSON(http.StatusBadRequest, fmt.Sprintf("invalid input body: %v", err))
 		return
 	}
 

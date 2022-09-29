@@ -1,6 +1,4 @@
-package main
-
-/*
+package webclient
 
 import (
 	"log"
@@ -10,8 +8,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type Client struct {
+type WebClient struct {
 	clients map[*websocket.Conn]bool
+}
+
+func NewWebClient(clients map[*websocket.Conn]bool) *WebClient {
+	return &WebClient{clients: clients}
 }
 
 // объект сообщения
@@ -32,7 +34,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
-func (clnt *Client) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalln("error connect: ", err)
@@ -67,11 +69,12 @@ func (clnt *Client) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		go clnt.MyWriteMessage(msg) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение
-		messageHandler(msg.Message)
+
+		//////////////////////////////messageHandler(msg.Message)
 	}
 }
 
-func (clnt *Client) MyWriteMessage(msg Message) {
+func (clnt *WebClient) MyWriteMessage(msg Message) {
 
 	// Grab the next message from the broadcast channel
 	// msg := <-broadcast
@@ -89,4 +92,3 @@ func (clnt *Client) MyWriteMessage(msg Message) {
 	// 	conn.WriteMessage(websocket.TextMessage, message)
 	// }
 }
-*/

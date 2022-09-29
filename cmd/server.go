@@ -1,23 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"github.com/AlexKomzzz/server/pkg/handler"
 	"github.com/AlexKomzzz/server/pkg/repository"
+	"github.com/AlexKomzzz/server/pkg/service"
+	"github.com/AlexKomzzz/server/pkg/webclient"
 	"github.com/gorilla/websocket"
-	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
 
-type Server struct {
-	*sqlx.DB
+/*type Server struct {
+	*gin.Engine
 	*Client
 	//clients map[*websocket.Conn]bool
 
 	//handleMessage func(message []byte)
-}
+}*/
 
 func initConfig() error { //Инициализация конфигураций
 	viper.AddConfigPath("configs")
@@ -25,13 +28,13 @@ func initConfig() error { //Инициализация конфигураций
 	return viper.ReadInConfig()
 }
 
-func (server *Server) StartServer() {
+/*func (server *Server) StartServer() {
 	http.Handle("/", http.FileServer(http.Dir("./web")))
 	// http.HandleFunc("/", server.IndexHandler)
 	http.HandleFunc("/ws", server.WebsocketHandler)
 	log.Println("сервер запущен на хосту:\t", fmt.Sprint(viper.GetString("host")+viper.GetString("port")))
 	http.ListenAndServe(fmt.Sprint(viper.GetString("host")+viper.GetString("port")), nil)
-}
+}*/
 
 // func (server *Server) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // 	tmpl, _ := template.ParseFiles("templates/index.html")
@@ -40,9 +43,9 @@ func (server *Server) StartServer() {
 // 	}
 // }
 
-func messageHandler(message string) {
+/*func (server *Server) messageHandler(message string) {
 	fmt.Println(string(message))
-}
+}*/
 
 func main() {
 
@@ -65,15 +68,34 @@ func main() {
 	}
 	defer db.Close()
 
-	server := &Server{
-		db,
-		&Client{
+	repos := repository.NewRepository(db)
+	service := service.NewService(repos)
+	webClient := webclient.NewWebClient(make(map[*websocket.Conn]bool))
+	handler := handler.NewHandler(service, webClient)
+
+	server := handler.InitRouter()
+
+	/*server := &Server{
+		eng,
+		&websocket.WebClient{
 			clients: make(map[*websocket.Conn]bool),
 		},
-		//clients: make(map[*websocket.Conn]bool),
-		//handleMessage: handleMessage,
-	}
-	server.StartServer()
+	}*/
+
+	go func() {
+		if err := server.Run(viper.GetString("port")); err != nil {
+			log.Fatalf("Error run web serv")
+			return
+		}
+	}()
+
+	log.Print("Chat Started")
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	//server.StartServer()
 
 	// for {
 	//server.MyWriteMessage([]byte("Hello"))
