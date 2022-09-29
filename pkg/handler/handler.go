@@ -29,7 +29,7 @@ func (h *Handler) InitRouter() *gin.Engine {
 	// открытие websocket
 	chat := mux.Group("/chat", h.userIdentity)
 	{
-		chat.POST("/").Static("/web", "./web")
+		chat.POST("/", h.StartChat)
 	}
 
 	return mux
