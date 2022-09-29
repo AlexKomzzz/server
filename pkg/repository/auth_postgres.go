@@ -27,3 +27,15 @@ func (r *Repository) CreateUser(user chat.User) (int, error) {
 
 	return id, nil
 }
+
+func (r *Repository) GetUser(email, password string) (int, error) {
+	// определим по email и паролю id пользователя
+	query := "SELECT id FROM users WHERE email=$1 AND password=$2"
+	var id int
+	err := r.db.Get(&id, query, email, password)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
