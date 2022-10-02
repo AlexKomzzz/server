@@ -22,7 +22,7 @@ func (h *Handler) signUp(c *gin.Context) {
 	// по данным пользователя заносим в БД и получаем id
 	id, err := h.service.CreateUser(user)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, err.Error())
+		c.AbortWithStatusJSON(http.StatusInternalServerError, fmt.Sprintf("error createUser handler: %v", err))
 		return
 	}
 

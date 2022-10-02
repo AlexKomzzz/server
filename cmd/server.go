@@ -11,6 +11,7 @@ import (
 	"github.com/AlexKomzzz/server/pkg/service"
 	"github.com/AlexKomzzz/server/pkg/webclient"
 	"github.com/gorilla/websocket"
+	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
 )
 
@@ -89,7 +90,7 @@ func main() {
 		}
 	}()
 
-	log.Print("Chat Started")
+	log.Print("Server Started")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)

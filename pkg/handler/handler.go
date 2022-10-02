@@ -27,10 +27,16 @@ func (h *Handler) InitRouter() *gin.Engine {
 	}
 
 	// открытие websocket
-	chat := mux.Group("/chat", h.userIdentity)
-	{
-		chat.POST("/", h.StartChat)
-	}
+	mux.Static("/", "./web")
+	mux.GET("/ws", h.webClient.WebsocketHandler)
+	//chat := mux.Group("/chat", h.userIdentity)
+	// chat := mux.Group("/chat")
+
+	// {
+	// 	// chat.GET("/start", h.StartChat)
+	// 	chat.Static("/", "./web")
+	// 	chat.GET("/ws", h.StartChat)
+	// }
 
 	return mux
 }

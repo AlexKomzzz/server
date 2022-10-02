@@ -2,9 +2,9 @@ package webclient
 
 import (
 	"log"
-	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -34,8 +34,9 @@ var upgrader = websocket.Upgrader{
 }
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
-func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+func (clnt *WebClient) WebsocketHandler(c *gin.Context) {
+	log.Println("connect...")
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Fatalln("error connect: ", err)
 	}
@@ -71,6 +72,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		// go messageHandler(message) // выводим сообщение
 
 		//////////////////////////////messageHandler(msg.Message)
+
 	}
 }
 

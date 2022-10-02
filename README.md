@@ -44,3 +44,19 @@ ln -s /etc/nginx/sites-available/alexkomzzz.ml.conf /etc/nginx/sites-enabled/
 
 2 таблица: history[id_1_user][id_2_user] - для каждого нового диалога создается новая таблица
   data, times, username, message
+
+  $ create table if not exists users
+    ( 
+        id serial not null unique, 
+        username VARCHAR(255) not null unique,
+        email VARCHAR(255) not null unique,
+        password VARCHAR(255) not null
+    );
+
+
+1 user
+  {
+    "username": "Alex",
+    "email": "komalex",
+    "password": "qwerty"
+  }
