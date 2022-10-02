@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"time"
@@ -10,10 +11,14 @@ import (
 
 type WebClient struct {
 	clients map[*websocket.Conn]bool
+	ctx     context.Context
 }
 
-func NewWebClient(clients map[*websocket.Conn]bool) *WebClient {
-	return &WebClient{clients: clients}
+func NewWebClient(clients map[*websocket.Conn]bool, ctx context.Context) *WebClient {
+	return &WebClient{
+		clients: clients,
+		ctx:     ctx,
+	}
 }
 
 // объект сообщения
@@ -21,7 +26,7 @@ type Message struct {
 	Email    string `json:"email"`
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Message  string `json:"message"`
+	Body     string `json:"message"`
 	Time     string `json:"time"`
 }
 
@@ -35,14 +40,23 @@ var upgrader = websocket.Upgrader{
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
 func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+
+	////////
+	//upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	////////
+
 	log.Println("connect...")
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatalln("error connect: ", err)
 	}
 	defer conn.Close()
-
 	log.Println("Client connected:", conn.RemoteAddr().String())
+
+	// вытащим id пользователя из контекста
+	username := clnt.ctx.Value("username").(string)
+
+	// по id необходимо из бд вытащить username
 	//var socketClient *ConnectUser = newConnectUser(conn, conn.RemoteAddr().String())
 	// сохраняем соединение
 	clnt.clients[conn] = true
@@ -66,7 +80,9 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		// 	break
 		// }
 
+		// в сообщение добавим время и username
 		msg.Time = time.Now().Format(time.Stamp)
+		msg.Username = username
 
 		go clnt.MyWriteMessage(msg) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение

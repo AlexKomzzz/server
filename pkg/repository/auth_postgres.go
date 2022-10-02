@@ -39,3 +39,15 @@ func (r *Repository) GetUser(email, password string) (int, error) {
 
 	return id, nil
 }
+
+func (r *Repository) GetUsername(userId int) (string, error) {
+	// определим по email и паролю id пользователя
+	query := "SELECT username FROM users WHERE id=$1"
+	var username string
+	err := r.db.Get(&username, query, userId)
+	if err != nil {
+		return "", err
+	}
+
+	return username, nil
+}

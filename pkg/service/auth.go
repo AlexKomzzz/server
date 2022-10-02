@@ -27,7 +27,7 @@ func generatePasswordHash(password string) string {
 }
 
 // функция создания Пользователя
-// возвращяем true, если пользователь создан
+// возвращяем id, если пользователь создан
 func (service *Service) CreateUser(user chat.User) (int, error) {
 	// захешим пароль
 	user.Password = generatePasswordHash(user.Password)
@@ -71,4 +71,9 @@ func (service *Service) ParseToken(accesstoken string) (int, error) {
 	}
 
 	return claims.UserId, nil
+}
+
+// функция получения username по id
+func (service *Service) GetUsername(userId int) (string, error) {
+	return service.repos.GetUsername(userId)
 }

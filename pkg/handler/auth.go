@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	chat "github.com/AlexKomzzz/server"
@@ -11,7 +10,6 @@ import (
 
 // Обработчик для регистрации пользователя
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
-	log.Println("Здесь")
 	var user chat.User
 
 	// парсим тело запроса в структуру пользователя
@@ -42,7 +40,6 @@ type InUser struct {
 
 // Обработчик для аутентификации пользователя
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
-	log.Println("Здесь")
 	var user InUser
 
 	// парсим тело запроса в структуру пользователя
@@ -64,3 +61,11 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	// 	"token": token,
 	// })
 }
+
+// func (h *Handler) In(w http.ResponseWriter, r *http.Request) {
+
+// 	w.Write([]byte(fmt.Sprintf("\"token\"")))
+// 	// c.JSON(http.StatusOK, gin.H{
+// 	// 	"token": token,
+// 	// })
+// }

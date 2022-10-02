@@ -1,32 +1,51 @@
 package handler
 
 import (
+	"context"
 	"net/http"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
+type myCtx string
+
 // парсинг хедера, определение JWT, определение id
-func (h *Handler) userIdentity(c *gin.Context) {
-	header := c.GetHeader("Authorization") // выделяем из заголовка поле "Authorization"
-	if header == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, "empty auth header")
-		return
-	}
+func (h *Handler) userIdentity(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	headerParts := strings.Split(header, " ")
-	if len(headerParts) != 2 || headerParts[0] != "Bearer" || headerParts[1] == "" {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid auth header")
-		return
-	}
+		header := r.Header.Get("Authorization") // выделяем из заголовка поле "Authorization"
+		if header == "" {
+			http.Error(w, "empty auth header", http.StatusUnauthorized)
+			return
+		}
 
-	userId, err := h.service.ParseToken(headerParts[1])
-	if err != nil {
-		c.AbortWithStatusJSON(http.StatusUnauthorized, err.Error())
-		return
-	}
+		headerParts := strings.Split(header, " ")
+		if len(headerParts) != 2 || headerParts[0] != "Bearer" || headerParts[1] == "" {
+			http.Error(w, "invalid auth header", http.StatusUnauthorized)
+			return
+		}
 
-	// запись id пользователя в контекст
-	c.Set("userId", userId)
+		userId, err := h.service.ParseToken(headerParts[1])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		if userId < 1 {
+			http.Error(w, "invalid auth token", http.StatusUnauthorized)
+			return
+		}
+
+		username, err := h.service.GetUsername(userId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		var keyName myCtx = "username"
+
+		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
+		//c.Set("userId", userId)
+
+		next.ServeHTTP(w, r)
+	})
 }

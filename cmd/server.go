@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -72,23 +73,16 @@ func main() {
 
 	repos := repository.NewRepository(db)
 	service := service.NewService(repos)
-	handler := handler.NewHandler(service, handler.NewWebClient(make(map[*websocket.Conn]bool)))
+	handler := handler.NewHandler(service, handler.NewWebClient(make(map[*websocket.Conn]bool), context.Background()))
 
 	//server := handler.InitRouter()
 	srv := &http.Server{
-		Addr: "0.0.0.0:8080",
-		// Good practice to set timeouts to avoid Slowloris attacks.
+		Addr:         "0.0.0.0:8080",
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,
-		Handler:      handler.InitRouter(), // Pass our instance of gorilla/mux in.
+		Handler:      handler.InitRouter(),
 	}
-	/*server := &Server{
-		eng,
-		&websocket.WebClient{
-			clients: make(map[*websocket.Conn]bool),
-		},
-	}*/
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil {
@@ -99,14 +93,10 @@ func main() {
 
 	log.Print("Server Started")
 
+	// остановка сервера
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
+
 	log.Print("Server Stopted")
-	//server.StartServer()
-
-	// for {
-	//server.MyWriteMessage([]byte("Hello"))
-	// }
-
 }

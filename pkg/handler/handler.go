@@ -29,13 +29,9 @@ func (h *Handler) InitRouter() *mux.Router {
 	}
 
 	// открытие websocket
-	//router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web")))
-	router.Handle("/", http.FileServer(http.Dir("./web")))
+	// вложение Handler в другой Handler для проверки аутентификации
+	router.Handle("/chat/", h.userIdentity(http.StripPrefix("/chat/", http.FileServer(http.Dir("./web")))))
 	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
-	// mux.Static("/", "./web")
-	// mux.GET("/ws", h.webClient.WebsocketHandler)
-	//chat := mux.Group("/chat", h.userIdentity)
-	// chat := mux.Group("/chat")
 
 	// {
 	// 	// chat.GET("/start", h.StartChat)
