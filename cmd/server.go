@@ -2,14 +2,15 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/AlexKomzzz/server/pkg/handler"
 	"github.com/AlexKomzzz/server/pkg/repository"
 	"github.com/AlexKomzzz/server/pkg/service"
-	"github.com/AlexKomzzz/server/pkg/webclient"
 	"github.com/gorilla/websocket"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -71,11 +72,17 @@ func main() {
 
 	repos := repository.NewRepository(db)
 	service := service.NewService(repos)
-	webClient := webclient.NewWebClient(make(map[*websocket.Conn]bool))
-	handler := handler.NewHandler(service, webClient)
+	handler := handler.NewHandler(service, handler.NewWebClient(make(map[*websocket.Conn]bool)))
 
-	server := handler.InitRouter()
-
+	//server := handler.InitRouter()
+	srv := &http.Server{
+		Addr: "0.0.0.0:8080",
+		// Good practice to set timeouts to avoid Slowloris attacks.
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      handler.InitRouter(), // Pass our instance of gorilla/mux in.
+	}
 	/*server := &Server{
 		eng,
 		&websocket.WebClient{
@@ -84,7 +91,7 @@ func main() {
 	}*/
 
 	go func() {
-		if err := server.Run(viper.GetString("port")); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			log.Fatalf("Error run web serv")
 			return
 		}
@@ -95,7 +102,7 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
 	<-quit
-
+	log.Print("Server Stopted")
 	//server.StartServer()
 
 	// for {

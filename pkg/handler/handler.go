@@ -1,34 +1,39 @@
 package handler
 
 import (
+	"net/http"
+
 	"github.com/AlexKomzzz/server/pkg/service"
-	"github.com/AlexKomzzz/server/pkg/webclient"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 )
 
 type Handler struct {
 	service   *service.Service
-	webClient *webclient.WebClient
+	webClient *WebClient
 }
 
-func NewHandler(service *service.Service, webClient *webclient.WebClient) *Handler {
+func NewHandler(service *service.Service, webClient *WebClient) *Handler {
 	return &Handler{
 		service:   service,
 		webClient: webClient,
 	}
 }
 
-func (h *Handler) InitRouter() *gin.Engine {
-	mux := gin.New()
-	auth := mux.Group("/auth")
+func (h *Handler) InitRouter() *mux.Router {
+	router := mux.NewRouter()
+
+	auth := router.PathPrefix("/auth").Methods("POST").Subrouter()
 	{
-		auth.POST("/sign-up", h.signUp)
-		auth.POST("/sign-in", h.signIn)
+		auth.HandleFunc("/sign-up", h.signUp)
+		auth.HandleFunc("/sign-in", h.signIn)
 	}
 
 	// открытие websocket
-	mux.Static("/", "./web")
-	mux.GET("/ws", h.webClient.WebsocketHandler)
+	//router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web")))
+	router.Handle("/", http.FileServer(http.Dir("./web")))
+	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
+	// mux.Static("/", "./web")
+	// mux.GET("/ws", h.webClient.WebsocketHandler)
 	//chat := mux.Group("/chat", h.userIdentity)
 	// chat := mux.Group("/chat")
 
@@ -38,5 +43,5 @@ func (h *Handler) InitRouter() *gin.Engine {
 	// 	chat.GET("/ws", h.StartChat)
 	// }
 
-	return mux
+	return router
 }
