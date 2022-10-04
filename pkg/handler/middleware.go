@@ -1,12 +1,15 @@
 package handler
 
 import (
+	//"context"
 	"context"
 	"net/http"
 	"strings"
 )
 
 type myCtx string
+
+var keyName myCtx = "username"
 
 // парсинг хедера, определение JWT, определение id
 func (h *Handler) userIdentity(next http.Handler) http.Handler {
@@ -40,8 +43,6 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
-
-		var keyName myCtx = "username"
 
 		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
 		//c.Set("userId", userId)

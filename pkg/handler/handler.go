@@ -30,9 +30,9 @@ func (h *Handler) InitRouter() *mux.Router {
 
 	// открытие websocket
 	// вложение Handler в другой Handler для проверки аутентификации
-	//router.Handle("/chat/", h.userIdentity(http.StripPrefix("/chat/", http.FileServer(http.Dir("./web")))))
+	router.Handle("/chat/", h.userIdentity(http.StripPrefix("/chat/", http.FileServer(http.Dir("./web")))))
 	//router.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web"))))
-	router.Handle("/", http.FileServer(http.Dir("./oldWeb")))
+	//router.Handle("/", http.FileServer(http.Dir("./web")))
 	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
 
 	// {
