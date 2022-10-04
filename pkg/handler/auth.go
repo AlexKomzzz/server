@@ -38,6 +38,10 @@ type InUser struct {
 	Password string `json:"password"`
 }
 
+type TokenResp struct {
+	Token string `json:"token"`
+}
+
 // Обработчик для аутентификации пользователя
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	var user InUser
@@ -55,8 +59,12 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	//w.Write([]byte(fmt.Sprintf("{\n\t\"token\": \"%s\"\n}", token)))
+	json.NewEncoder(w).Encode(&TokenResp{
+		Token: token,
+	})
 
-	w.Write([]byte(fmt.Sprintf("\"token\": \"%s\"", token)))
 	// c.JSON(http.StatusOK, gin.H{
 	// 	"token": token,
 	// })
