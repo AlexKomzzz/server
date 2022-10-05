@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/AlexKomzzz/server/pkg/service"
-	"github.com/gorilla/mux"
 )
 
 type Handler struct {
@@ -19,28 +18,37 @@ func NewHandler(service *service.Service, webClient *WebClient) *Handler {
 	}
 }
 
-func (h *Handler) InitRouter() *mux.Router {
-	router := mux.NewRouter()
+func (h *Handler) InitRouter() *http.ServeMux {
+	// router := mux.NewRouter()
 
-	auth := router.PathPrefix("/auth").Methods("POST").Subrouter()
-	{
-		auth.HandleFunc("/sign-up", h.signUp)
-		auth.HandleFunc("/sign-in", h.signIn)
-	}
+	// auth := router.PathPrefix("/auth").Methods("POST").Subrouter()
+	// {
+	// 	auth.HandleFunc("/sign-up", h.signUp)
+	// 	auth.HandleFunc("/sign-in", h.signIn)
+	// }
 
 	// открытие websocket
 	// вложение Handler в другой Handler для проверки аутентификации
 	//router.Handle("/chat/", h.userIdentity(http.StripPrefix("/chat/", http.FileServer(http.Dir("./web")))))
 	//router.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web"))))
 	//router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
-	router.Handle("/", http.FileServer(http.Dir("./web")))
-	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
+
+	// router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web")))
+
+	// // http.Handle("/", http.FileServer(http.Dir("./web")))
+	// // router.Handle("/", http.FileServer(http.Dir("./web")))
+	// router.HandleFunc("/ws", h.webClient.WebsocketHandler)
 
 	// {
 	// 	// chat.GET("/start", h.StartChat)
 	// 	chat.Static("/", "./web")
 	// 	chat.GET("/ws", h.StartChat)
 	// }
+
+	router := http.NewServeMux()
+
+	router.Handle("/", http.FileServer(http.Dir("./web")))
+	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
 
 	return router
 }
