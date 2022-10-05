@@ -77,7 +77,7 @@ func main() {
 
 	//server := handler.InitRouter()
 	srv := &http.Server{
-		Addr:         "localhost:8080",
+		Addr:         "0.0.0.0:8080",
 		WriteTimeout: time.Second * 15,
 		ReadTimeout:  time.Second * 15,
 		IdleTimeout:  time.Second * 60,

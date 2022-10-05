@@ -47,8 +47,16 @@ func (h *Handler) InitRouter() *http.ServeMux {
 
 	router := http.NewServeMux()
 
-	router.Handle("/", http.FileServer(http.Dir("./web")))
+	// Аутентификация и авторизация
+	router.HandleFunc("/auth/sign-up", h.signUp)
+	router.HandleFunc("/auth/sign-in", h.signIn)
+
+	// Запуск чата после авторизации
+	router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
 	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
+
+	// Создание чата по email
+	router.HandleFunc("/chat/:email", h.createChat)
 
 	return router
 }

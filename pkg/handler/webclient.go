@@ -52,7 +52,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	defer conn.Close()
 	log.Println("Client connected:", conn.RemoteAddr().String())
 
-	clnt.ctx = context.WithValue(clnt.ctx, keyName, "Alex")
+	//clnt.ctx = context.WithValue(clnt.ctx, keyName, "Alex")
 
 	// вытащим id пользователя из контекста
 	username := clnt.ctx.Value(keyName).(string)

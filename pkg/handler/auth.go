@@ -10,6 +10,13 @@ import (
 
 // Обработчик для регистрации пользователя
 func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
+
+	// проверка метода
+	if r.Method != "POST" {
+		http.Error(w, "invalid method: no POST", http.StatusBadRequest)
+		return
+	}
+
 	var user chat.User
 
 	// парсим тело запроса в структуру пользователя
@@ -26,11 +33,9 @@ func (h *Handler) signUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(fmt.Sprintf("\"id\": \"%d\"", id)))
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"id": id,
-	// })
+	w.Header().Set("Content-Type", "application/json")
 
+	w.Write([]byte(fmt.Sprintf("{\n\t\"id\": \"%d\"\n}", id)))
 }
 
 type InUser struct {
@@ -44,6 +49,13 @@ type TokenResp struct {
 
 // Обработчик для аутентификации пользователя
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
+
+	// проверка метода
+	if r.Method != "POST" {
+		http.Error(w, "invalid method: no POST", http.StatusBadRequest)
+		return
+	}
+
 	var user InUser
 
 	// парсим тело запроса в структуру пользователя
@@ -65,9 +77,6 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 		Token: token,
 	})
 
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"token": token,
-	// })
 }
 
 // func (h *Handler) In(w http.ResponseWriter, r *http.Request) {
