@@ -55,7 +55,7 @@ func (h *Handler) InitRouter() *http.ServeMux {
 
 	// Запуск чата после авторизации
 	router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
-	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
+	router.HandleFunc("/ws", h.WebsocketHandler)
 
 	// Создание чата по email
 	// в url должен быть след. фрагмент: ?email={emailUser}

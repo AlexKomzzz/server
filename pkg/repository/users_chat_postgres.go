@@ -117,7 +117,7 @@ func (r *Repository) GetHistoryChat(historyChat *[]chat.Message, idUser1, idUser
 }
 
 // добавление записи в чат
-func (r *Repository) WriteInChat(idUser1, idUser2 int, msg *chat.Message) error {
+func (r *Repository) WriteInChat(msg *chat.Message, idUser1, idUser2 int) error {
 
 	// определяем меньший id пользователя
 	if idUser1 > idUser2 {

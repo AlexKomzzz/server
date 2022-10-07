@@ -76,13 +76,4 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(&TokenResp{
 		Token: token,
 	})
-
 }
-
-// func (h *Handler) In(w http.ResponseWriter, r *http.Request) {
-
-// 	w.Write([]byte(fmt.Sprintf("\"token\"")))
-// 	// c.JSON(http.StatusOK, gin.H{
-// 	// 	"token": token,
-// 	// })
-// }

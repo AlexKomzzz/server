@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,8 +20,8 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	////
-	h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
+	//// для проверки без идентификации
+	// h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
 	////
 
 	var historyChat []chat.Message

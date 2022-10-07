@@ -9,7 +9,8 @@ import (
 
 type myCtx string
 
-var keyName, keyId myCtx = "username", "userId"
+// var keyName, keyId myCtx = "username", "userId"
+var keyId myCtx = "userId"
 
 // проверка идентификации для Handler
 // парсинг хедера, определение JWT, определение id
@@ -42,14 +43,14 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 		// запись idUser в контекст
 		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, userId)
 
-		username, err := h.service.GetUsername(userId)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
+		// username, err := h.service.GetUsername(userId)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusUnauthorized)
+		// 	return
+		// }
 
-		// запись username в контекст
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
+		// // запись username в контекст
+		// h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
 		//c.Set("userId", userId)
 
 		next.ServeHTTP(w, r)
@@ -86,14 +87,14 @@ func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 		// запись idUser в контекст
 		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, userId)
 
-		username, err := h.service.GetUsername(userId)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
-			return
-		}
+		// username, err := h.service.GetUsername(userId)
+		// if err != nil {
+		// 	http.Error(w, err.Error(), http.StatusUnauthorized)
+		// 	return
+		// }
 
-		// запись username в контекст
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
+		// // запись username в контекст
+		// h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
 		//c.Set("userId", userId)
 
 		next.ServeHTTP(w, r)
