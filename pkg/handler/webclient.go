@@ -38,7 +38,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
-func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	////////
 	//upgrader.CheckOrigin = func(r *http.Request) bool { return true }
@@ -54,11 +54,16 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	//clnt.ctx = context.WithValue(clnt.ctx, keyName, "Alex")
 
 	// вытащим username пользователя из контекста
-	username := clnt.ctx.Value(keyName).(string)
+	//username := h.webClient.ctx.Value(keyName).(string)
+	userId := h.webClient.ctx.Value(keyId).(int)
+	username, err := h.service.GetUsername(userId)
+	if err != nil {
+		log.Fatalln("error: не получен username по id: ", err)
+	}
 
 	// сохраняем соединение
-	clnt.clients[conn] = true
-	defer delete(clnt.clients, conn)
+	h.webClient.clients[conn] = true
+	defer delete(h.webClient.clients, conn)
 
 	for {
 		var msg *chat.Message
@@ -66,7 +71,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(clnt.clients, conn)
+			delete(h.webClient.clients, conn)
 			break
 		}
 
@@ -74,7 +79,9 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		msg.Date = time.Now().Format(time.Stamp)
 		msg.Username = username
 
-		go clnt.MyWriteMessage(msg) // отправляем сообщение
+		// сохраняем сообщение в БД
+
+		go h.MyWriteMessage(msg) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение
 
 		//////////////////////////////messageHandler(msg.Message)
@@ -82,17 +89,17 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (clnt *WebClient) MyWriteMessage(msg *chat.Message) {
+func (h *Handler) MyWriteMessage(msg *chat.Message) {
 
 	// Grab the next message from the broadcast channel
 	// msg := <-broadcast
 	// отправим сообщение каждому подключенному клиенту
-	for client := range clnt.clients {
+	for client := range h.webClient.clients {
 		err := client.WriteJSON(msg)
 		if err != nil {
 			log.Printf("error: %v", err)
 			client.Close()
-			delete(clnt.clients, client)
+			delete(h.webClient.clients, client)
 		}
 	}
 

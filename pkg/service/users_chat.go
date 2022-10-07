@@ -38,3 +38,14 @@ func (service *Service) GetChat(historyChat []chat.Message, idUser1 int, emailUs
 
 	return historyChat, nil
 }
+
+// сохранение нового сообщения в чат
+func (service *Service) WriteInChat(msg *chat.Message, idUser1, idUser2 int) error {
+
+	err := service.repos.WriteInChat(msg, idUser1, idUser2)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
