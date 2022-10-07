@@ -3,6 +3,8 @@ package repository
 import (
 	"errors"
 	"fmt"
+
+	chat "github.com/AlexKomzzz/server"
 )
 
 // определение, был ли чат между этими пользователями создан ранее
@@ -34,7 +36,8 @@ func (r *Repository) getChatsByUsers(idUser, idNewUser int) (bool, error) {
 }
 
 // создание таблицы для хранения истории чата с другим пользователем
-func (r *Repository) createChat(idUser1, idUser2 int) error {
+// в названии таблицы первый id пользователя ВСЕГДА меньше второго
+func (r *Repository) CreateChat(idUser1, idUser2 int) error {
 	// определяем меньший id пользователя
 	if idUser1 > idUser2 {
 		idUser1, idUser2 = idUser2, idUser1
@@ -45,7 +48,7 @@ func (r *Repository) createChat(idUser1, idUser2 int) error {
 					id serial not null unique, 
 					user_1 integer references users (id) not null,
 					user_2 integer references users (id) not null,
-					data timestamp,
+					date timestamp,
 					username VARCHAR(255) references users  on delete cascade not null,
 					message VARCHAR(255) not null
 				);`, idUser1, idUser2)
@@ -53,6 +56,47 @@ func (r *Repository) createChat(idUser1, idUser2 int) error {
 	_, err := r.db.Exec(query)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// выгрузка истории чата
+func (r *Repository) GetChat(idUser1, idUser2 int) ([]*chat.Message, error) {
+	// определяем меньший id пользователя
+	if idUser1 > idUser2 {
+		idUser1, idUser2 = idUser2, idUser1
+	}
+
+	historyChat := make([]*chat.Message, 0)
+
+	query := fmt.Sprintf("SELECT (id, date, username, message) FROM chat%d%d", idUser1, idUser2)
+	err := r.db.Select(&historyChat, query)
+	if err != nil {
+		return nil, fmt.Errorf("error: 'select' from GetChat (repos): %v", err)
+	}
+	return historyChat, nil
+}
+
+// добавление записи в чат
+func (r *Repository) WriteInChat(idUser1, idUser2 int, msg *chat.Message) error {
+
+	// определяем меньший id пользователя
+	if idUser1 > idUser2 {
+		idUser1, idUser2 = idUser2, idUser1
+	}
+
+	query := fmt.Sprintf("INSERT INTO chat%d%d (date, username, message) VALUES (TIMESTAMP '$1', $2, $3)", idUser1, idUser2)
+	// ничего не возвращаем, используем exec
+	res, err := r.db.Exec(query, msg.Date, msg.Username, msg.Body)
+	if err != nil {
+		return fmt.Errorf("error: 'exec' from WriteInChat (repos): %v", err)
+	}
+	numRows, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error: 'RowsAffected' from WriteInChat (repos): %v", err)
+	} else if numRows == 0 {
+		return fmt.Errorf("error: сообщение не записалось в БД: ")
 	}
 
 	return nil
