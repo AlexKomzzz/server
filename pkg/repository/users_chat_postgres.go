@@ -108,10 +108,10 @@ func (r *Repository) GetHistoryChat(historyChat *[]chat.Message, idUser1, idUser
 
 	//historyChat := make([]*chat.Message, 0)
 
-	query := fmt.Sprintf("SELECT (id, date, username, message) FROM chat%d%d", idUser1, idUser2)
-	err := r.db.Select(&historyChat, query)
+	query := fmt.Sprintf("SELECT * FROM chat%d%d", idUser1, idUser2)
+	err := r.db.Select(historyChat, query)
 	if err != nil {
-		return nil, fmt.Errorf("error: 'select' from GetChat (repos): %v", err)
+		return nil, fmt.Errorf("error: 'select' from GetHistoryChat (repos): %v", err)
 	}
 	return *historyChat, nil
 }

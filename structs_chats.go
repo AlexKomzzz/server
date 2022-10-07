@@ -8,7 +8,7 @@ type User struct {
 }
 
 type Message struct {
-	Id       int    `json:"-" db:"id"`
+	Id       int    `json:"id" db:"id"`
 	Date     string `json:"data" db:"date"`
 	Username string `json:"username" db:"username"`
 	Body     string `json:"message" db:"message"`

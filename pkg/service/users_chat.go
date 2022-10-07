@@ -31,7 +31,10 @@ func (service *Service) GetChat(historyChat []chat.Message, idUser1 int, emailUs
 	}
 
 	// получение истории чата пользователей
-	service.repos.GetHistoryChat(&historyChat, idUser1, idUser2)
+	historyChat, err = service.repos.GetHistoryChat(&historyChat, idUser1, idUser2)
+	if err != nil {
+		return nil, err
+	}
 
 	return historyChat, nil
 }

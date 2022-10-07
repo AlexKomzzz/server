@@ -90,7 +90,7 @@ _____________________________________________________
 ___________________________________________________
   Cоздание таблицы с историей чата:
 
-    $ create table if not exists chat23
+    $ create table if not exists chat12
       ( 
         id serial not null unique, 
         date timestamp,

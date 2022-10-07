@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -15,12 +16,16 @@ type HistoryResp struct {
 
 // создание чата с другим пользователем по его email
 func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
-
-	// проверка метода
-	if r.Method != "POST" {
-		http.Error(w, "invalid method: no POST", http.StatusBadRequest)
+	if r.Method != "GET" {
+		http.Error(w, "invalid method: no GET", http.StatusBadRequest)
 		return
 	}
+
+	////
+	h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
+	////
+
+	var historyChat []chat.Message
 
 	// выделим email из url
 	// получим мапу из параметров указанных в url с помощью "?"
@@ -34,9 +39,6 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 
 	// вытащим id пользователя из контекста
 	idUser := h.webClient.ctx.Value(keyId).(int)
-
-	//
-	historyChat := make([]chat.Message, 0)
 
 	// получение истории чата с пользователем
 	historyChat, err = h.service.GetChat(historyChat, idUser, emailUser2)
