@@ -52,11 +52,14 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Client connected:", conn.RemoteAddr().String())
 
 	//clnt.ctx = context.WithValue(clnt.ctx, keyName, "Alex")
+	//h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
 
 	// вытащим username пользователя из контекста
 	//username := h.webClient.ctx.Value(keyName).(string)
-	userId := h.webClient.ctx.Value(keyId).(int)
-	username, err := h.service.GetUsername(userId)
+
+	//userId := h.webClient.ctx.Value(keyId).(int)
+	//username, err := h.service.GetUsername(userId)
+	username, err := "Alex", nil
 	if err != nil {
 		log.Fatalln("error: не получен username по id: ", err)
 	}
@@ -80,6 +83,7 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		msg.Username = username
 
 		// сохраняем сообщение в БД
+		//h.service.WriteInChat(msg, )
 
 		go h.MyWriteMessage(msg) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение

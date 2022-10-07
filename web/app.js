@@ -8,7 +8,7 @@ new Vue({
         email: null, // Email address used for grabbing an avatar
         username: null, // Our username
         password: '',
-        time: null,
+        date: null,
     },
 
     created: function() {
@@ -21,7 +21,7 @@ new Vue({
              '<div class="chip">'
                     + msg.username
                 + '</div>'
-                + msg.time
+                + msg.date
                 + '     '
                 + msg.message
 
@@ -38,7 +38,7 @@ new Vue({
             if (this.newMsg != '') {
                 this.ws.send(
                     JSON.stringify({
-                        username: this.username,
+                        // username: this.username,
                         message: $('<p>').html(this.newMsg).text() // Strip out html
                     }
                 ));
