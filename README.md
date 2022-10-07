@@ -5,6 +5,7 @@
   hendler на изменение username
 
   3. создание чата с пользователем или открыть существующий
+  для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
 
 ## Docker
 
@@ -35,6 +36,9 @@ ln -s /etc/nginx/sites-available/alexkomzzz.ml.conf /etc/nginx/sites-enabled/
 /usr/share/nginx/html
 
 
+ БД
+docker exec -it db /bin/bash
+psql -U postgres
 
 ## Структура БД
 
@@ -44,18 +48,40 @@ ln -s /etc/nginx/sites-available/alexkomzzz.ml.conf /etc/nginx/sites-enabled/
 2 таблица: history[id_1_user][id_2_user] - для каждого нового диалога создается новая таблица
   data, times, username, message
 
-  $ create table if not exists users
-    ( 
+    $ create table if not exists users
+      ( 
         id serial not null unique, 
-        username VARCHAR(255) not null unique,
+        username VARCHAR(255) not null primary key,
         email VARCHAR(255) not null unique,
-        password VARCHAR(255) not null
-    );
+        password VARCHAR(255) not null,
+        chats INTEGER[]
+      );
 
 
 1 user
-  {
+
+    {
     "username": "Alex",
     "email": "komalex",
     "password": "qwerty"
-  }
+    }
+
+  изменение массива:
+
+    $ UPDATE users SET chats[cardinality(chats) + 1] = 1 WHERE id = 1;
+
+  поиск в массиве:
+
+    $ SELECT id FROM users WHERE {id_user2} = ANY (chats) AND id = {id_user1};
+
+  создание таблицы с историей чата:
+
+    $ create table if not exists chat12
+      ( 
+        id serial not null unique, 
+        user_1 integer references users (id) not null,
+        user_2 integer references users (id) not null,
+        data timestamp,
+        username VARCHAR(255) references users  on delete cascade not null,
+        message VARCHAR(255) not null
+      );      
