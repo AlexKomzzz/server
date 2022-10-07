@@ -56,7 +56,7 @@ psql -U postgres
         password VARCHAR(255) not null,
         chats INTEGER[]
       );
-
+// для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
 
 1 user
 
@@ -74,9 +74,23 @@ psql -U postgres
 
     $ SELECT id FROM users WHERE {id_user2} = ANY (chats) AND id = {id_user1};
 
-  создание таблицы с историей чата:
+_____________________________________________________
+  Создание таблицы с созданными чатами (у каких пользователей уже созданы чаты друг с другом):
 
-    $ create table if not exists chat12
+      $ create table if not exists created_chats
+      ( 
+        id_user1 integer references users (id) not null,
+        id_user2 integer references users (id) not null
+      ); 
+
+  Проверка на существование чата между пользователями:
+
+    $ SELECT * FROM created_chats WHERE id_user1=$1 id_user2=$2;
+если вернется 1 строка, то таблица уже создана, если 0 - то еще нет.
+___________________________________________________
+  Cоздание таблицы с историей чата:
+
+    $ create table if not exists chat23
       ( 
         id serial not null unique, 
         date timestamp,

@@ -9,7 +9,7 @@ import (
 
 type myCtx string
 
-var keyName myCtx = "username"
+var keyName, keyId myCtx = "username", "userId"
 
 // парсинг хедера, определение JWT, определение id
 func (h *Handler) userIdentity(next http.Handler) http.Handler {
@@ -38,12 +38,16 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 			return
 		}
 
+		// запись idUser в контекст
+		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, userId)
+
 		username, err := h.service.GetUsername(userId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
+		// запись username в контекст
 		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
 		//c.Set("userId", userId)
 

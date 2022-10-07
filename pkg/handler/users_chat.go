@@ -1,6 +1,10 @@
 package handler
 
-import "net/http"
+import (
+	"net/http"
+
+	chat "github.com/AlexKomzzz/server"
+)
 
 // создание чата с другим пользователем по его email
 func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
@@ -13,6 +17,19 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 
 	// выделим email из url
 	//r.URL.Parse()
+	emailUser2 := "asd"
 
-	// получить id второго клиента по его email
+	// вытащим id пользователя из контекста
+	idUser := h.webClient.ctx.Value(keyId).(int)
+
+	//
+	historyChat := make([]*chat.Message, 0)
+	var err error
+
+	// получение истории чата с пользователем
+	historyChat, err = h.service.GetChat(historyChat, idUser, emailUser2)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
