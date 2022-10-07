@@ -79,9 +79,13 @@ psql -U postgres
     $ create table if not exists chat12
       ( 
         id serial not null unique, 
-        user_1 integer references users (id) not null,
-        user_2 integer references users (id) not null,
-        data timestamp,
+        date timestamp,
         username VARCHAR(255) references users  on delete cascade not null,
         message VARCHAR(255) not null
       );      
+
+//         id_user integer references users (id) not null,
+
+  Запись в таблицу чата:
+
+    $ INSERT INTO chat12 (date, username, message) VALUES (TIMESTAMP '2004-10-19 10:23:54', 'Alex', 'Hello, Bob!');

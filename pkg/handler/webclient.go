@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	chat "github.com/AlexKomzzz/server"
 	"github.com/gorilla/websocket"
 )
 
@@ -22,13 +23,11 @@ func NewWebClient(clients map[*websocket.Conn]bool, ctx context.Context) *WebCli
 }
 
 // объект сообщения
-type Message struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Body     string `json:"message"`
-	Time     string `json:"time"`
-}
+// type Message struct {
+// 	Username string `json:"username"`
+// 	Body     string `json:"message"`
+// 	Date     string `json:"date"`
+// }
 
 var upgrader = websocket.Upgrader{
 	// CheckOrigin: func(r *http.Request) bool {
@@ -64,7 +63,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	defer delete(clnt.clients, conn)
 
 	for {
-		var msg Message
+		var msg *chat.Message
 		// читаем сообщение, парсим json в структуру сообщения
 		err := conn.ReadJSON(&msg)
 		if err != nil {
@@ -74,7 +73,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// в сообщение добавим время и username
-		msg.Time = time.Now().Format(time.Stamp)
+		msg.Date = time.Now().Format(time.Stamp)
 		msg.Username = username
 
 		go clnt.MyWriteMessage(msg) // отправляем сообщение
@@ -85,7 +84,7 @@ func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-func (clnt *WebClient) MyWriteMessage(msg Message) {
+func (clnt *WebClient) MyWriteMessage(msg *chat.Message) {
 
 	// Grab the next message from the broadcast channel
 	// msg := <-broadcast

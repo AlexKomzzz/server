@@ -3,7 +3,7 @@ package handler
 import "net/http"
 
 // создание чата с другим пользователем по его email
-func (h *Handler) createChat(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 
 	// проверка метода
 	if r.Method != "POST" {
