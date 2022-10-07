@@ -11,7 +11,7 @@ type myCtx string
 
 var keyName, keyId myCtx = "username", "userId"
 
-// проверка авторизации для Handler
+// проверка идентификации для Handler
 // парсинг хедера, определение JWT, определение id
 func (h *Handler) userIdentity(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +56,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 	})
 }
 
-// проверка авторизации для HandlerFunc
+// проверка идентификации для HandlerFunc
 func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
