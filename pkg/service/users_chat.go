@@ -3,7 +3,7 @@ package service
 import chat "github.com/AlexKomzzz/server"
 
 // Создание чата с клиентом
-func (service *Service) GetChat(historyChat []*chat.Message, idUser1 int, emailUser2 string) ([]*chat.Message, error) {
+func (service *Service) GetChat(historyChat []chat.Message, idUser1 int, emailUser2 string) ([]chat.Message, error) {
 
 	// определение id второго пользователя по email
 	idUser2, err := service.repos.GetUserByEmail(emailUser2)

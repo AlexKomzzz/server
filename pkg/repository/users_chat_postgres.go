@@ -100,7 +100,7 @@ func (r *Repository) SetChatsByUser(idUser1, idUser2 int) error {
 }
 
 // выгрузка истории чата
-func (r *Repository) GetHistoryChat(historyChat *[]*chat.Message, idUser1, idUser2 int) ([]*chat.Message, error) {
+func (r *Repository) GetHistoryChat(historyChat *[]chat.Message, idUser1, idUser2 int) ([]chat.Message, error) {
 	// определяем меньший id пользователя
 	if idUser1 > idUser2 {
 		idUser1, idUser2 = idUser2, idUser1

@@ -58,7 +58,8 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.HandleFunc("/ws", h.webClient.WebsocketHandler)
 
 	// Создание чата по email
-	router.HandleFunc("/chat/:email", h.getChat)
+	// в url должен быть след. фрагмент: ?email={emailUser}
+	router.HandleFunc("/chat", h.getChat)
 
 	return router
 }
