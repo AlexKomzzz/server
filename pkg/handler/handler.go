@@ -19,31 +19,6 @@ func NewHandler(service *service.Service, webClient *WebClient) *Handler {
 }
 
 func (h *Handler) InitRouter() *http.ServeMux {
-	// router := mux.NewRouter()
-
-	// auth := router.PathPrefix("/auth").Methods("POST").Subrouter()
-	// {
-	// 	auth.HandleFunc("/sign-up", h.signUp)
-	// 	auth.HandleFunc("/sign-in", h.signIn)
-	// }
-
-	// открытие websocket
-	// вложение Handler в другой Handler для проверки аутентификации
-	//router.Handle("/chat/", h.userIdentity(http.StripPrefix("/chat/", http.FileServer(http.Dir("./web")))))
-	//router.Handle("/chat/", http.StripPrefix("/chat/", http.FileServer(http.Dir("./web"))))
-	//router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
-
-	// router.PathPrefix("/").Handler(http.FileServer(http.Dir("./web")))
-
-	// // http.Handle("/", http.FileServer(http.Dir("./web")))
-	// // router.Handle("/", http.FileServer(http.Dir("./web")))
-	// router.HandleFunc("/ws", h.webClient.WebsocketHandler)
-
-	// {
-	// 	// chat.GET("/start", h.StartChat)
-	// 	chat.Static("/", "./web")
-	// 	chat.GET("/ws", h.StartChat)
-	// }
 
 	router := http.NewServeMux()
 
@@ -53,8 +28,10 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.HandleFunc("/auth/sign-up", h.signUp)
 	router.HandleFunc("/auth/sign-in", h.signIn)
 
-	// Запуск чата после авторизации
-	router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
+	//router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
+	// router.Handle("/chat/start", h.userIdentity(http.StripPrefix("/chat/start", http.FileServer(http.Dir("./web")))))
+	// Запуск чата после авторизации. добавить start в URL
+	router.Handle("/", h.userIdentity(http.StripPrefix("/", http.FileServer(http.Dir("./web/")))))
 	router.HandleFunc("/ws", h.WebsocketHandler)
 
 	// Создание чата по email

@@ -97,6 +97,6 @@ func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 		// h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
 		//c.Set("userId", userId)
 
-		next.ServeHTTP(w, r)
+		next(w, r)
 	}
 }
