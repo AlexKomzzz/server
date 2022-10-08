@@ -8,7 +8,7 @@ new Vue({
         email: null, // Email address used for grabbing an avatar
         username: null, // Our username
         password: '',
-        date: null,
+        date: '',
     },
 
     created: function() {
@@ -22,7 +22,7 @@ new Vue({
                     + msg.username
                 + '</div>'
                 + msg.date
-                + '     '
+                + '   \t'
                 + msg.message
 
              + '<br/>';
