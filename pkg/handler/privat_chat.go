@@ -1,11 +1,8 @@
 package handler
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	chat "github.com/AlexKomzzz/server"
@@ -16,7 +13,7 @@ type HistoryResp struct {
 }
 
 // создание чата с другим пользователем по его email
-func (h *Handler) getChat(next http.HandlerFunc) http.HandlerFunc {
+/*func (h *Handler) getChat(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Method != "GET" {
@@ -29,33 +26,6 @@ func (h *Handler) getChat(next http.HandlerFunc) http.HandlerFunc {
 		////
 
 		// var historyChat []chat.Message
-
-		// // выделим email из url
-		// // получим мапу из параметров указанных в url с помощью "?"
-		set, err := url.ParseQuery(r.URL.RawQuery)
-		if err != nil {
-			http.Error(w, fmt.Errorf("error: invalid URL: %s", err).Error(), http.StatusBadRequest)
-			return
-		}
-
-		// log.Println("set = ", set)
-
-		/////// ДЛЯ ТЕСТА
-		// set["email"] = append(set["email"], "bobik")
-		// ///////
-
-		var emailUser2 string
-		// // из мапы вытащим значение email
-		if _, ok := set["email"]; ok {
-			emailUser2 = set["email"][0]
-		}
-		// log.Println("emailUser2 = ", emailUser2)
-
-		// u, _ := url.Parse(r.URL)
-		// emailUser2 := r.URL.Fragment
-		// log.Println("emailUser2 = ", emailUser2)
-		// записать в контекст
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyEmail, emailUser2)
 
 		// // вытащим id пользователя из контекста
 		// idUser := h.webClient.ctx.Value(keyId).(int)
@@ -75,14 +45,10 @@ func (h *Handler) getChat(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
-}
+}*/
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
 func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
-
-	////////
-	//upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	////////
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -91,22 +57,32 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	log.Println("Client connected:", conn.RemoteAddr().String())
 
-	//clnt.ctx = context.WithValue(clnt.ctx, keyName, "Alex")
-	//h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
-
-	// вытащим username пользователя из контекста
-	//username := h.webClient.ctx.Value(keyName).(string)
-
-	//userId := h.webClient.ctx.Value(keyId).(int)
-	//username, err := h.service.GetUsername(userId)
+	////////////////////////
 	username, err := "Alex", nil
 	if err != nil {
 		log.Fatalln("error: не получен username по id: ", err)
 	}
+	////////////////////////
 
 	// сохраняем соединение
 	h.webClient.clients[conn] = true
 	defer delete(h.webClient.clients, conn)
+
+	// получение id текущего пользователя из контекста
+	idUser1 := h.webClient.ctx.Value(keyId).(int)
+	// получение email пользователя, с которым создаем чат, из контекста
+	emailUser2 := h.webClient.ctx.Value(keyEmail).(string)
+
+	// получение истории чата из БД
+	historyChat, err := h.service.GetChat(idUser1, emailUser2)
+	if err != nil {
+		log.Fatalln("error: не получена история чата: ", err)
+	}
+
+	// передача истории клиентам
+	for _, msg := range historyChat {
+		go h.MyWriteMessage(&msg) // возможна блокировка
+	}
 
 	for {
 		var msg *chat.Message
@@ -123,12 +99,9 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		msg.Username = username
 
 		// сохраняем сообщение в БД
-		//h.service.WriteInChat(msg, )
+		h.service.WriteInChat(msg, idUser1, emailUser2)
 
 		go h.MyWriteMessage(msg) // отправляем сообщение
-		// go messageHandler(message) // выводим сообщение
-
-		//////////////////////////////messageHandler(msg.Message)
 
 	}
 }

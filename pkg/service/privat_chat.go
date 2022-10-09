@@ -2,7 +2,7 @@ package service
 
 import chat "github.com/AlexKomzzz/server"
 
-// Создание чата с клиентом, получение истории чата
+// Создание чата с клиентом(если его нет), получение истории чата
 func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]chat.Message, error) {
 
 	// определение id второго пользователя по email
@@ -27,9 +27,16 @@ func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]chat.Message,
 }
 
 // сохранение нового сообщения в чат
-func (service *Service) WriteInChat(msg *chat.Message, idUser1, idUser2 int) error {
+func (service *Service) WriteInChat(msg *chat.Message, idUser1 int, emailUser2 string) error {
 
-	err := service.repos.WriteInChat(msg, idUser1, idUser2)
+	// определение id второго пользователя по email
+	idUser2, err := service.repos.GetUserByEmail(emailUser2)
+	if err != nil {
+		return err
+	}
+
+	// сохранение нового сообщения в БД
+	err = service.repos.WriteInChat(msg, idUser1, idUser2)
 	if err != nil {
 		return err
 	}
