@@ -16,7 +16,8 @@ import (
 // необходимо передать структуру User с зашифрованным паролем
 func (r *Repository) CreateUser(user chat.User) (int, error) {
 
-	query := "INSERT INTO users (username, email, password, chats) VALUES ($1, $2, $3, '{0}') RETURNING id"
+	// query := "INSERT INTO users (username, email, password, chats) VALUES ($1, $2, $3, '{0}') RETURNING id"
+	query := "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id"
 
 	row := r.db.QueryRow(query, user.Username, user.Email, user.Password)
 	var id int

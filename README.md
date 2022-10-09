@@ -7,6 +7,9 @@
   3. создание чата с пользователем или открыть существующий
   для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
 
+  4. создание группы 
+  создать токен и приглашать раздачей токена
+
 ## Docker
 
 создание тома:
@@ -50,56 +53,84 @@ psql -U postgres
 
     $ create table if not exists users
       ( 
-        id serial not null unique, 
+        id serial not null unique primary key, 
         username VARCHAR(255) not null primary key,
         email VARCHAR(255) not null unique,
-        password VARCHAR(255) not null,
-        chats INTEGER[]
+        password VARCHAR(255) not null
       );
-// для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
+   <!-- chats INTEGER[] -->
 
-1 user
+ <!-- для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
+  1 user
 
     {
     "username": "Alex",
     "email": "komalex",
     "password": "qwerty"
-    }
+    } -->
 
-  изменение массива:
+  <!-- изменение массива:
 
     $ UPDATE users SET chats[cardinality(chats) + 1] = 1 WHERE id = 1;
 
   поиск в массиве:
 
-    $ SELECT id FROM users WHERE {id_user2} = ANY (chats) AND id = {id_user1};
+    $ SELECT id FROM users WHERE {id_user2} = ANY (chats) AND id = {id_user1}; -->
 
 _____________________________________________________
-  Создание таблицы с созданными чатами (у каких пользователей уже созданы чаты друг с другом):
+  Cоздание таблиц с созданными чатами и с историей чата:
+   при создании чата, создается его id и записываются id пользователей
 
-      $ create table if not exists created_chats
+    $ create table if not exists chats
       ( 
+        id serial not null unique primary key, 
         id_user1 integer references users (id) not null,
-        id_user2 integer references users (id) not null
-      ); 
+        id_user2 integer references users (id) not null,
+      );  
+
+  Запись при создании чата:
+
+    $ INSERT INTO chats (id_user1, id_user2) VALUES (1, 2);
 
   Проверка на существование чата между пользователями:
 
-    $ SELECT * FROM created_chats WHERE id_user1=$1 id_user2=$2;
-если вернется 1 строка, то таблица уже создана, если 0 - то еще нет.
-___________________________________________________
-  Cоздание таблицы с историей чата:
+    $ SELECT * FROM chats WHERE id_user1=$1 id_user2=$2;
 
-    $ create table if not exists chat12
-      ( 
-        id serial not null unique, 
+если вернется 1 строка, то таблица уже создана, если 0 - то еще нет.
+
+
+
+  Также создается таблица для хранения истории чата, в названии которой применяется id чата и хранятся сообщения
+
+    $ create table if not exists history_chat{id_chat}
+      (  
         date timestamp,
         username VARCHAR(255) references users  on delete cascade not null,
         message VARCHAR(255) not null
       );      
 
-//         id_user integer references users (id) not null,
 
-  Запись в таблицу чата:
+  Запись в таблицу истории чата:
 
-    $ INSERT INTO chat12 (date, username, message) VALUES (TIMESTAMP '2004-10-19 10:23:54', 'Alex', 'Hello, Bob!');
+    $ INSERT INTO history_chat{id_chat} (date, username, message) VALUES (TIMESTAMP '2004-10-19 10:23:54', 'Alex', 'Hello, Bob!');
+
+______________________________________________________
+Создание группового чата:
+  таблица с группами
+
+    $ create table if not exists groups
+      ( 
+        id serial not null unique primary key, 
+        token VARCHAR(255) not null unique,
+        title VARCHAR(255) not null,
+        admin VARCHAR(255) references users (username) on delete cascade not null,
+      );  
+
+таблица участников групп и чатов:
+
+    $ create table if not exists user_group
+      ( 
+        id_user references users (id) on delete cascade,
+        id_group references groups (id) on delete cascade,
+        id_chat references chats (id) on delete cascade
+      );  
