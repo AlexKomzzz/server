@@ -40,7 +40,7 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 	idUser := h.webClient.ctx.Value(keyId).(int)
 
 	// получение истории чата с пользователем
-	historyChat, err = h.service.GetChat(historyChat, idUser, emailUser2)
+	historyChat, err = h.service.GetChat(idUser, emailUser2)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -22,7 +22,7 @@ func (h *Handler) InitRouter() *http.ServeMux {
 
 	router := http.NewServeMux()
 
-	router.HandleFunc("/test", h.test)
+	//router.HandleFunc("/test", h.test)
 
 	// Аутентификация и авторизация
 	router.HandleFunc("/auth/sign-up", h.signUp)
