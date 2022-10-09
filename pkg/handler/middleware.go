@@ -3,14 +3,21 @@ package handler
 import (
 	//"context"
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 type myCtx string
 
 // var keyName, keyId myCtx = "username", "userId"
-var keyId myCtx = "userId"
+var keyId, keyEmail myCtx = "userId", "email"
+
+// поиск email в URL и проверка идентификации
+func (h *Handler) parseEmailAndIdentity(next http.Handler) http.Handler {
+	return h.parseEmail(h.userIdentity(next))
+}
 
 // проверка идентификации для Handler
 // парсинг хедера, определение JWT, определение id
@@ -58,7 +65,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 }
 
 // проверка идентификации для HandlerFunc
-func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
+/*func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		header := r.Header.Get("Authorization") // выделяем из заголовка поле "Authorization"
@@ -99,4 +106,26 @@ func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
+}*/
+
+// парсинг URL в поиках email
+func (h *Handler) parseEmail(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// выделим email из url
+		// получим мапу из параметров указанных в url с помощью "?"
+		set, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error: invalid URL: %s", err).Error(), http.StatusBadRequest)
+			return
+		}
+		var emailUser2 string
+		// // из мапы вытащим значение email
+		if _, ok := set["email"]; ok {
+			emailUser2 = set["email"][0]
+		}
+		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyEmail, emailUser2)
+
+		next.ServeHTTP(w, r)
+	})
 }

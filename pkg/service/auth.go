@@ -10,7 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const tokenTTL = 30 * time.Hour
+const tokenTTL = 300 * time.Hour
 
 const JWT_SECRET = "rkjk#4#%35FSFJlja#4353KSFjH"
 const SOLT = "bt,&#Rkm54FS#$WR2@#nasf!dsfre%"
