@@ -28,19 +28,19 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.HandleFunc("/auth/sign-up", h.signUp)
 	router.HandleFunc("/auth/sign-in", h.signIn)
 
+	// Запуск общего чата после авторизации
+	// создание общего чата
 	//router.Handle("/", h.userIdentity(http.FileServer(http.Dir("./web"))))
 	// router.Handle("/chat/start", h.userIdentity(http.StripPrefix("/chat/start", http.FileServer(http.Dir("./web")))))
-	// Запуск общего чата после авторизации
 	router.Handle("/start/", h.userIdentity(http.StripPrefix("/start/", http.FileServer(http.Dir("./web/start/")))))
-	// создание общего чата
 	router.HandleFunc("/ws", h.WebsocketHandler)
 
 	// создание приватного чата для двоих
 	// router.Handle("/chat_two/", h.userIdentity(http.StripPrefix("/chat_two/", http.FileServer(http.Dir("./web/chat_two/")))))
 	router.Handle("/chat_two/", h.parseEmailAndIdentity(http.StripPrefix("/chat_two/", http.FileServer(http.Dir("./web/chat_two/")))))
-
-	router.HandleFunc("/chat", h.getChat(h.ChatTwoUser))
-	//router.HandleFunc("/chat", h.WebsocketHandler)
+	router.HandleFunc("/chat", h.ChatTwoUser)
+	// router.HandleFunc("/chat", h.getChat(h.ChatTwoUser))
+	// пример URL http://localhost:8080/chat_two/?email={email_user}
 
 	// Создание чата по email
 	// в url должен быть след. фрагмент: ?email=bobik
