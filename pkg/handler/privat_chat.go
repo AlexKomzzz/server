@@ -6,6 +6,7 @@ import (
 	"time"
 
 	chat "github.com/AlexKomzzz/server"
+	"github.com/gorilla/websocket"
 )
 
 type HistoryResp struct {
@@ -58,20 +59,28 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("Client connected:", conn.RemoteAddr().String())
 
 	////////////////////////
-	username, err := "Alex", nil
-	if err != nil {
-		log.Fatalln("error: не получен username по id: ", err)
-	}
+	// username, err := "Alex", nil
+	// if err != nil {
+	// 	log.Fatalln("error: не получен username по id: ", err)
+	// }
 	////////////////////////
 
 	// сохраняем соединение
-	h.webClient.clients[conn] = true
-	defer delete(h.webClient.clients, conn)
+	clients := make(map[*websocket.Conn]bool)
+	clients[conn] = true
+	defer delete(clients, conn)
 
 	// получение id текущего пользователя из контекста
 	idUser1 := h.webClient.ctx.Value(keyId).(int)
+
 	// получение email пользователя, с которым создаем чат, из контекста
 	emailUser2 := h.webClient.ctx.Value(keyEmail).(string)
+
+	// получение username по id
+	username, err := h.service.GetUsername(idUser1)
+	if err != nil {
+		log.Fatalln("error: не получен username по id: ", err)
+	}
 
 	// получение истории чата из БД
 	historyChat, err := h.service.GetChat(idUser1, emailUser2)
@@ -90,7 +99,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(h.webClient.clients, conn)
+			delete(clients, conn)
 			break
 		}
 
@@ -99,9 +108,25 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		msg.Username = username
 
 		// сохраняем сообщение в БД
-		h.service.WriteInChat(msg, idUser1, emailUser2)
+		err = h.service.WriteInChat(msg, idUser1, emailUser2)
+		if err != nil {
+			log.Fatalln("error: сообщение не сохранено: ", err)
+		}
 
-		go h.MyWriteMessage(msg) // отправляем сообщение
+		// отправляем сообщение
+		go h.sendMessage(msg, clients)
+	}
+}
 
+func (h *Handler) sendMessage(msg *chat.Message, clients map[*websocket.Conn]bool) {
+
+	// отправим сообщение каждому подключенному клиенту
+	for client := range clients {
+		err := client.WriteJSON(msg)
+		if err != nil {
+			log.Printf("error: %v", err)
+			client.Close()
+			delete(clients, client)
+		}
 	}
 }
