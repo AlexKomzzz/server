@@ -14,24 +14,59 @@ func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
 	}
 	var idChat int
 
-	query := "SELECT id FROM chats WHERE id_user1=$1 id_user2=$2"
+	tx, err := r.db.Begin()
+	if err != nil {
+		tx.Rollback()
+		return -1, fmt.Errorf("error: 'Begin' from CreateChatTwoUser (repos): %v", err)
+	}
+	defer tx.Rollback()
+
+	query := "SELECT id FROM chats WHERE id_user1=$1 AND id_user2=$2"
 	// res, err := r.db.Exec(query, idUser1, idUser2)
 	// if err != nil {
 	// 	return fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
 	// }
 
-	row := r.db.QueryRow(query, idUser1, idUser2)
-	err := row.Scan(&idChat)
-	if err != nil {
-		return -1, fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
-	}
+	row := tx.QueryRow(query, idUser1, idUser2)
+	err = row.Scan(&idChat)
 
-	if idChat < 1 {
-		// значит чат не был создан
-		// создаем чат
-		idChat, err = r.UpdateChats(idUser1, idUser2)
-		if err != nil {
-			return -1, err
+	if err != nil {
+		if err.Error() == "sql: no rows in result set" {
+
+			// значит чат не был создан
+			// создаем чат
+
+			//idChat, err = r.UpdateChats(idUser1, idUser2)
+
+			// первый шаг при создании чата между пользователями.
+			// Добавление записи в таблицу chats
+
+			query := "INSERT INTO chats (id_user1, id_user2) VALUES ($1, $2) RETURNING id"
+
+			row := tx.QueryRow(query, idUser1, idUser2)
+			err := row.Scan(&idChat)
+			if err != nil {
+				tx.Rollback()
+				return -1, fmt.Errorf("error: ошибка при возврате id чата в UpdateChats (repos): %v", err)
+			}
+
+			//создание таблицы для хранения истории чата с другим пользователем
+			// err = r.CreateHistoryChat(idChat)
+
+			// Второй шаг при создании чата между пользователями.
+			// Создание таблицы для хранения истории чата с другим пользователем
+			query = fmt.Sprintf("create table if not exists history_chat%d	(date timestamp, username VARCHAR(255) references users (username) on delete cascade not null,	message VARCHAR(255) not null)", idChat)
+
+			// создание таблицы. Если уже создана то пропуск
+			_, err = tx.Exec(query)
+			if err != nil {
+				tx.Rollback()
+				return -1, fmt.Errorf("error: 'exec' from CreateChat (repos): %v", err)
+			}
+
+		} else {
+			tx.Rollback()
+			return -1, fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
 		}
 	}
 
@@ -48,6 +83,7 @@ func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
 	// 	// создаем чат
 	// 	r.UpdateChats(idUser1, idUser2)
 	// }
+	tx.Commit()
 
 	return idChat, nil
 }
@@ -83,12 +119,7 @@ func (r *Repository) UpdateChats(idUser1, idUser2 int) (int, error) {
 // Создание таблицы для хранения истории чата с другим пользователем
 func (r *Repository) CreateHistoryChat(idChat int) error {
 
-	query := fmt.Sprintf(`create table if not exists history_chat%d
-							(  
-	 							date timestamp,
-								username VARCHAR(255) references users  on delete cascade not null,
-								message VARCHAR(255) not null
-							);  `, idChat)
+	query := fmt.Sprintf("create table if not exists history_chat%d	(date timestamp, username VARCHAR(255) references users (username) on delete cascade not null,	message VARCHAR(255) not null)", idChat)
 
 	// создание таблицы. Если уже создана то пропуск
 	_, err := r.db.Exec(query)
@@ -144,17 +175,18 @@ func (r *Repository) CreateHistoryChat(idChat int) error {
 }*/
 
 // выгрузка истории чата
-func (r *Repository) GetHistoryChat(idChat int) ([]chat.Message, error) {
+func (r *Repository) GetHistoryChat(idChat int) ([]*chat.Message, error) {
 
-	var historyChat []chat.Message
+	historyChat := make([]*chat.Message, 0)
 
-	//historyChat := make([]*chat.Message, 0)
-
-	query := fmt.Sprintf("SELECT * FROM chat%d", idChat)
-	err := r.db.Select(historyChat, query)
+	query := fmt.Sprintf("SELECT * FROM history_chat%d", idChat)
+	err := r.db.Select(&historyChat, query)
 	if err != nil {
-		return nil, fmt.Errorf("error: 'select' from GetHistoryChat (repos): %v", err)
+		if err.Error() != "sql: no rows in result set" {
+			return nil, fmt.Errorf("error: 'select' from GetHistoryChat (repos): %v", err)
+		}
 	}
+
 	return historyChat, nil
 }
 
@@ -166,7 +198,7 @@ func (r *Repository) WriteInChat(msg *chat.Message, idUser1, idUser2 int) error 
 		return err
 	}
 
-	query := fmt.Sprintf("INSERT INTO chat%d (date, username, message) VALUES (TIMESTAMP '$1', $2, $3)", idChat)
+	query := fmt.Sprintf("INSERT INTO history_chat%d (date, username, message) VALUES ($1, $2, $3)", idChat)
 	// ничего не возвращаем, используем exec
 	res, err := r.db.Exec(query, msg.Date, msg.Username, msg.Body)
 	if err != nil {

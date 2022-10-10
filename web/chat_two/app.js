@@ -21,7 +21,7 @@ new Vue({
              '<div class="chip">'
                     + msg.username
                 + '</div>'
-                // + msg.date
+                 + msg.date
                 + '   \t'
                 + msg.message
 

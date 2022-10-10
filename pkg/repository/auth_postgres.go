@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	chat "github.com/AlexKomzzz/server"
 )
 
@@ -39,7 +41,7 @@ func (r *Repository) GetUserByEmail(email string) (int, error) {
 	var id int
 	err := r.db.Get(&id, query, email)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("error: 'select' from GetUserByEmail (repos): нет пользователя с таким email: %v", err)
 	}
 
 	return id, nil
