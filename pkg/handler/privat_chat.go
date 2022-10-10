@@ -72,7 +72,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 
 	// получение id текущего пользователя из контекста
 	idUser1 := h.webClient.ctx.Value(keyId).(int)
-
+	log.Println("id = ", idUser1)
 	// получение email пользователя, с которым создаем чат, из контекста
 	emailUser2 := h.webClient.ctx.Value(keyEmail).(string)
 
@@ -88,9 +88,18 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("error: не получена история чата: ", err)
 	}
 
+	// historyChat := []*chat.Message{{
+	// 	Date:     "2004-10-19 10:23:54",
+	// 	Username: "Alex",
+	// 	Body:     "Hello",
+	// }}
+
 	// передача истории клиентам
-	for _, msg := range historyChat {
-		go h.MyWriteMessage(&msg) // возможна блокировка
+	if len(historyChat) > 0 {
+		for _, msg := range historyChat {
+
+			h.sendMessage(msg, clients) // возможна блокировка
+		}
 	}
 
 	for {
@@ -104,7 +113,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// в сообщение добавим время и username
-		msg.Date = time.Now().Format(time.Stamp)
+		msg.Date = time.Now().Format("2006-01-02 15:04:05")
 		msg.Username = username
 
 		// сохраняем сообщение в БД
@@ -114,7 +123,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// отправляем сообщение
-		go h.sendMessage(msg, clients)
+		h.sendMessage(msg, clients)
 	}
 }
 

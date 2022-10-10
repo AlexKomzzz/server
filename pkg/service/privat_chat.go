@@ -1,9 +1,11 @@
 package service
 
-import chat "github.com/AlexKomzzz/server"
+import (
+	chat "github.com/AlexKomzzz/server"
+)
 
 // Создание чата с клиентом(если его нет), получение истории чата
-func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]chat.Message, error) {
+func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]*chat.Message, error) {
 
 	// определение id второго пользователя по email
 	idUser2, err := service.repos.GetUserByEmail(emailUser2)
@@ -18,12 +20,7 @@ func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]chat.Message,
 	}
 
 	// получение истории чата пользователей
-	historyChat, err := service.repos.GetHistoryChat(idChat)
-	if err != nil {
-		return nil, err
-	}
-
-	return historyChat, nil
+	return service.repos.GetHistoryChat(idChat)
 }
 
 // сохранение нового сообщения в чат

@@ -4,6 +4,7 @@ import (
 	//"context"
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -124,6 +125,12 @@ func (h *Handler) parseEmail(next http.Handler) http.Handler {
 		if _, ok := set["email"]; ok {
 			emailUser2 = set["email"][0]
 		}
+		if emailUser2 == "" {
+			log.Println("Значение email не передано в URL")
+			//w.Write([]byte("error: не передано значние email в URL"))
+
+		}
+
 		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyEmail, emailUser2)
 
 		next.ServeHTTP(w, r)

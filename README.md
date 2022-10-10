@@ -10,6 +10,9 @@
   4. создание группы 
   создать токен и приглашать раздачей токена
 
+  Поправить дату при вызове из БД
+  Не с первого раза определяет email из URL!!!
+
 ## Docker
 
 создание тома:
@@ -54,7 +57,7 @@ psql -U postgres
     $ create table if not exists users
       ( 
         id serial not null unique primary key, 
-        username VARCHAR(255) not null primary key,
+        username VARCHAR(255) not null unique,
         email VARCHAR(255) not null unique,
         password VARCHAR(255) not null
       );
@@ -85,7 +88,7 @@ _____________________________________________________
       ( 
         id serial not null unique primary key, 
         id_user1 integer references users (id) not null,
-        id_user2 integer references users (id) not null,
+        id_user2 integer references users (id) not null
       );  
 
   Запись при создании чата:
@@ -105,7 +108,7 @@ _____________________________________________________
     $ create table if not exists history_chat{id_chat}
       (  
         date timestamp,
-        username VARCHAR(255) references users  on delete cascade not null,
+        username VARCHAR(255) references users (username) on delete cascade not null,
         message VARCHAR(255) not null
       );      
 
@@ -123,14 +126,22 @@ ______________________________________________________
         id serial not null unique primary key, 
         token VARCHAR(255) not null unique,
         title VARCHAR(255) not null,
-        admin VARCHAR(255) references users (username) on delete cascade not null,
+        admin integer references users (id) on delete cascade not null
       );  
 
 таблица участников групп и чатов:
 
     $ create table if not exists user_group
       ( 
-        id_user references users (id) on delete cascade,
-        id_group references groups (id) on delete cascade,
-        id_chat references chats (id) on delete cascade
+        id_user integer references users (id) on delete cascade,
+        id_group integer references groups (id) on delete cascade
+      );  
+
+  Также создается таблица для хранения истории группы, в названии которой применяется id группы и хранятся сообщения
+
+    $ create table if not exists history_group{id_group}
+      (  
+        date timestamp,
+        username VARCHAR(255) references users  on delete cascade not null,
+        message VARCHAR(255) not null
       );  
