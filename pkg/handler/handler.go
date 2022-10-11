@@ -46,5 +46,9 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	// в url должен быть след. фрагмент: ?email=bobik
 	// router.HandleFunc("/chat", h.userIdentityHF(h.getChat))
 
+	// создание группового чата
+	// в url должен быть след. фрагмент: ?title={title_group}
+	router.HandleFunc("/group_chat", h.userIdentityHF(h.getGroup))
+
 	return router
 }

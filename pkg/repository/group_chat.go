@@ -36,7 +36,15 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 	_, err = tx.Exec(queryCreate)
 	if err != nil {
 		tx.Rollback()
-		return -1, fmt.Errorf("error при создании таблицы history_group: func 'Exec' from CreateGroup (repos): %v", err)
+		return -1, fmt.Errorf("error при создании таблицы history_group: func 'Exec CREATE' from CreateGroup (repos): %v", err)
+	}
+
+	// добавление записи в таблицу user_group
+	queryInsert := "INSERT INTO user_group (id_user, id_group) VALUES ($1, $2)"
+	_, err = tx.Exec(queryInsert, idAdmin, idGroup)
+	if err != nil {
+		tx.Rollback()
+		return -1, fmt.Errorf("error при собавление записи в таблицу user_group: func 'Exec INSERT' from CreateGroup (repos): %v", err)
 	}
 
 	// коммит транзакции
