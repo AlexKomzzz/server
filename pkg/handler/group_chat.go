@@ -23,7 +23,7 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// получение id текущего пользователя из контекста
-	idUser := h.webClient.ctx.Value(keyId).(int)
+	idUser := h.ctx.Value(keyId).(int)
 
 	// выделим title_group из url
 	// получим мапу из параметров указанных в url с помощью "?"
@@ -45,12 +45,16 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// создаем групповой чат в БД и получаем его id
 	idGroup, err := h.service.CreateGroup(title_group, idUser)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// создаем в мапе clients клиентов массив для записи подключенных клиентов, где ключ будет "group{idGroup}"
+	h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool, 0)
 
 	// отправим клиенту id группового чата
 	w.Header().Set("Content-Type", "application/json")
@@ -67,23 +71,20 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 	log.Println("Client connected:", conn.RemoteAddr().String())
 
-	////////////////////////
-	// username, err := "Alex", nil
-	// if err != nil {
-	// 	log.Fatalln("error: не получен username по id: ", err)
-	// }
-	////////////////////////
+	// получение id группового чата, к которому осуществилось подключение
+	idGroup := h.ctx.Value(keyIdGroup).(int)
 
-	// сохраняем соединение
-	clients := make(map[*websocket.Conn]bool)
-	clients[conn] = true
-	defer delete(clients, conn)
+	keyClients := fmt.Sprintf("group%d", idGroup)
+
+	// // сохраняем соединение в мапу слиентов
+	h.clients[keyClients][conn] = true
+	defer delete(h.clients[keyClients], conn)
 
 	// получение id текущего пользователя из контекста
-	idUser1 := h.webClient.ctx.Value(keyId).(int)
+	idUser1 := h.ctx.Value(keyId).(int)
 	log.Println("id = ", idUser1)
 	// получение email пользователя, с которым создаем чат, из контекста
-	emailUser2 := h.webClient.ctx.Value(keyEmail).(string)
+	emailUser2 := h.ctx.Value(keyEmail).(string)
 
 	// получение username по id
 	username, err := h.service.GetUsername(idUser1)
@@ -107,7 +108,7 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 	if len(historyChat) > 0 {
 		for _, msg := range historyChat {
 			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "       ", 1)
-			h.sendMessage(msg, clients) // возможна блокировка
+			h.sendMessage(msg, keyClients) // возможна блокировка
 		}
 	}
 
@@ -117,7 +118,7 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(clients, conn)
+			delete(h.clients[keyClients], conn)
 			break
 		}
 
@@ -132,6 +133,6 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// отправляем сообщение
-		h.sendMessage(msg, clients)
+		go h.sendMessage(msg, keyClients)
 	}
 }

@@ -1,13 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	chat "github.com/AlexKomzzz/server"
-	"github.com/gorilla/websocket"
 )
 
 type HistoryResp struct {
@@ -66,16 +66,20 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	// }
 	////////////////////////
 
+	// получение id приватного чата, к которому осуществилось подключение
+	idChat := h.ctx.Value(keyIdChat).(int)
+
+	keyClients := fmt.Sprintf("chat%d", idChat)
+
 	// сохраняем соединение
-	clients := make(map[*websocket.Conn]bool)
-	clients[conn] = true
-	defer delete(clients, conn)
+	h.clients[keyClients][conn] = true
+	defer delete(h.clients[keyClients], conn)
 
 	// получение id текущего пользователя из контекста
-	idUser1 := h.webClient.ctx.Value(keyId).(int)
+	idUser1 := h.ctx.Value(keyId).(int)
 	log.Println("id = ", idUser1)
 	// получение email пользователя, с которым создаем чат, из контекста
-	emailUser2 := h.webClient.ctx.Value(keyEmail).(string)
+	emailUser2 := h.ctx.Value(keyEmail).(string)
 
 	// получение username по id
 	username, err := h.service.GetUsername(idUser1)
@@ -99,7 +103,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	if len(historyChat) > 0 {
 		for _, msg := range historyChat {
 			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "       ", 1)
-			h.sendMessage(msg, clients) // возможна блокировка
+			h.sendMessage(msg, keyClients) // возможна блокировка
 		}
 	}
 
@@ -109,7 +113,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(clients, conn)
+			delete(h.clients[keyClients], conn)
 			break
 		}
 
@@ -124,19 +128,19 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// отправляем сообщение
-		h.sendMessage(msg, clients)
+		go h.sendMessage(msg, keyClients)
 	}
 }
 
-func (h *Handler) sendMessage(msg *chat.Message, clients map[*websocket.Conn]bool) {
+// func (h *Handler) sendMessage(msg *chat.Message, clients map[*websocket.Conn]bool) {
 
-	// отправим сообщение каждому подключенному клиенту
-	for client := range clients {
-		err := client.WriteJSON(msg)
-		if err != nil {
-			log.Printf("error: %v", err)
-			client.Close()
-			delete(clients, client)
-		}
-	}
-}
+// 	// отправим сообщение каждому подключенному клиенту
+// 	for client := range clients {
+// 		err := client.WriteJSON(msg)
+// 		if err != nil {
+// 			log.Printf("error: %v", err)
+// 			client.Close()
+// 			delete(clients, client)
+// 		}
+// 	}
+// }

@@ -1,24 +1,48 @@
 package handler
 
 import (
+	"context"
+	"log"
 	"net/http"
 
+	chat "github.com/AlexKomzzz/server"
 	"github.com/AlexKomzzz/server/pkg/service"
+	"github.com/gorilla/websocket"
 )
 
 type Handler struct {
-	service   *service.Service
-	webClient *WebClient
+	service *service.Service
+	clients map[string]map[*websocket.Conn]bool
+	ctx     context.Context
 }
 
-func NewHandler(service *service.Service, webClient *WebClient) *Handler {
+func NewHandler(service *service.Service, clients map[string]map[*websocket.Conn]bool, ctx context.Context) *Handler {
 	return &Handler{
-		service:   service,
-		webClient: webClient,
+		service: service,
+		clients: clients,
+		ctx:     ctx,
+	}
+}
+
+// рассылка сообщений подключенным пользователям
+// keyClients - передать chat{idChat} или group{idGroup}
+func (h *Handler) sendMessage(msg *chat.Message, keyClients string) {
+
+	// отправим сообщение каждому подключенному клиенту
+	for client := range h.clients[keyClients] {
+		err := client.WriteJSON(msg)
+		if err != nil {
+			log.Printf("error: %v", err)
+			client.Close()
+			delete(h.clients[keyClients], client)
+		}
 	}
 }
 
 func (h *Handler) InitRouter() *http.ServeMux {
+
+	// создаем в мапе clients массив для записи подключенных клиентов ОБЩЕГО чата, где ключ будет "all"
+	h.clients["all"] = make(map[*websocket.Conn]bool, 0)
 
 	router := http.NewServeMux()
 
@@ -52,8 +76,8 @@ func (h *Handler) InitRouter() *http.ServeMux {
 
 	// подключение к групповому чату
 	// пример URL http://localhost:8080/chat_group/?idGroup={id_group}
-	router.Handle("/chat_group/", h.parseEmailAndIdentity(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
-	router.HandleFunc("/chat_group", h.ChatTwoUser)
+	router.Handle("/chat_group/", h.parseIdGroupAndIdentity(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
+	router.HandleFunc("/chat_group", h.ConnGroupChat)
 
 	return router
 }

@@ -73,7 +73,8 @@ func main() {
 
 	repos := repository.NewRepository(db)
 	service := service.NewService(repos)
-	handler := handler.NewHandler(service, handler.NewWebClient(make(map[*websocket.Conn]bool), context.Background()))
+	// handler := handler.NewHandler(service, handler.NewWebClient(make(map[string][]*websocket.Conn), context.Background()))
+	handler := handler.NewHandler(service, make(map[string]map[*websocket.Conn]bool), context.Background())
 
 	//server := handler.InitRouter()
 	srv := &http.Server{

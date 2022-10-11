@@ -7,17 +7,23 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
 type myCtx string
 
 // var keyName, keyId myCtx = "username", "userId"
-var keyId, keyEmail myCtx = "userId", "email"
+var keyId, keyEmail, keyIdGroup, keyIdChat myCtx = "userId", "email", "igGroup", "idChat"
 
 // поиск email в URL и проверка идентификации
 func (h *Handler) parseEmailAndIdentity(next http.Handler) http.Handler {
 	return h.parseEmail(h.userIdentity(next))
+}
+
+// поиск idGroup в URL и проверка идентификации
+func (h *Handler) parseIdGroupAndIdentity(next http.Handler) http.Handler {
+	return h.parseIdGroup(h.userIdentity(next))
 }
 
 // проверка идентификации для Handler
@@ -49,7 +55,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 		}
 
 		// запись idUser в контекст
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, userId)
+		h.ctx = context.WithValue(h.ctx, keyId, userId)
 
 		// username, err := h.service.GetUsername(userId)
 		// if err != nil {
@@ -93,7 +99,7 @@ func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// запись idUser в контекст
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, userId)
+		h.ctx = context.WithValue(h.ctx, keyId, userId)
 
 		// username, err := h.service.GetUsername(userId)
 		// if err != nil {
@@ -131,7 +137,44 @@ func (h *Handler) parseEmail(next http.Handler) http.Handler {
 
 		}
 
-		h.webClient.ctx = context.WithValue(h.webClient.ctx, keyEmail, emailUser2)
+		h.ctx = context.WithValue(h.ctx, keyEmail, emailUser2)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// парсинг URL в поиках idGroup
+func (h *Handler) parseIdGroup(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// выделим idGroup из url
+		// получим мапу из параметров указанных в url с помощью "?"
+		set, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error: invalid URL: %s", err).Error(), http.StatusBadRequest)
+			return
+		}
+
+		var idGroupStr string
+		// // из мапы вытащим значение email
+		if _, ok := set["idGroup"]; ok {
+			idGroupStr = set["idGroup"][0]
+		}
+		if idGroupStr == "" {
+			log.Println("Значение idGroup не передано в URL")
+			http.Error(w, "error: значение idGroup не передано в URL", http.StatusBadRequest)
+			return
+		}
+
+		// конвертация idGroup из стороковго типа в целочисленный
+		idGroup, err := strconv.Atoi(idGroupStr)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error: invalid idGroup: %s", err).Error(), http.StatusBadRequest)
+			return
+		}
+
+		// запись idGroup в контекст
+		h.ctx = context.WithValue(h.ctx, keyIdGroup, idGroup)
 
 		next.ServeHTTP(w, r)
 	})
