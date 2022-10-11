@@ -16,7 +16,6 @@ type Message struct {
 
 type GroupChat struct {
 	Id           int    `json:"-" db:"id"`
-	Token        string `json:"token" db:"token"`
 	Title        string `json:"title" db:"title"`
 	Admin        int    `json:"admin" db:"admin"`
 	Participants []int  `json:"participants"`

@@ -1,6 +1,11 @@
 package repository
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+
+	chat "github.com/AlexKomzzz/server"
+)
 
 // создание группового чата
 // возвращает id созданной группы
@@ -23,6 +28,7 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 		tx.Rollback()
 		return -1, fmt.Errorf("error: 'Scan' from CreateGroup (repos): %v", err)
 	}
+	log.Printf("добавление группы №%d в таблицу groups\n", idGroup)
 
 	//создание таблицы для хранения истории чата группы
 	queryCreate := fmt.Sprintf(`create table if not exists history_group%d
@@ -38,6 +44,7 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 		tx.Rollback()
 		return -1, fmt.Errorf("error при создании таблицы history_group: func 'Exec CREATE' from CreateGroup (repos): %v", err)
 	}
+	log.Printf("создание таблицы history_group№%d\n", idGroup)
 
 	// добавление записи в таблицу user_group
 	queryInsert := "INSERT INTO user_group (id_user, id_group) VALUES ($1, $2)"
@@ -46,6 +53,7 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 		tx.Rollback()
 		return -1, fmt.Errorf("error при собавление записи в таблицу user_group: func 'Exec INSERT' from CreateGroup (repos): %v", err)
 	}
+	log.Println("добавление записи в таблицу user_group")
 
 	// коммит транзакции
 	err = tx.Commit()
@@ -55,4 +63,23 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 	}
 
 	return idGroup, nil
+}
+
+// добавление записи в групповой чат
+func (r *Repository) WriteInGroupChat(msg *chat.Message, idUser, idGroup int) error {
+
+	query := fmt.Sprintf("INSERT INTO history_group%d (date, username, message) VALUES ($1, $2, $3)", idGroup)
+	// ничего не возвращаем, используем exec
+	_, err := r.db.Exec(query, msg.Date, msg.Username, msg.Body)
+	if err != nil {
+		return fmt.Errorf("error: 'exec' from WriteInGroupChat (repos): %v", err)
+	}
+	// numRows, err := res.RowsAffected()
+	// if err != nil {
+	// 	return fmt.Errorf("error: 'RowsAffected' from WriteInChat (repos): %v", err)
+	// } else if numRows == 0 {
+	// 	return fmt.Errorf("error: сообщение не записалось в БД: ")
+	// }
+
+	return nil
 }
