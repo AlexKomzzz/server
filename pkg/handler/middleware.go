@@ -66,7 +66,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 }
 
 // проверка идентификации для HandlerFunc
-/*func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
+func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		header := r.Header.Get("Authorization") // выделяем из заголовка поле "Authorization"
@@ -107,7 +107,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 
 		next(w, r)
 	}
-}*/
+}
 
 // парсинг URL в поиках email
 func (h *Handler) parseEmail(next http.Handler) http.Handler {
