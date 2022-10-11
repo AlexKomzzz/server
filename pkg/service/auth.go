@@ -35,7 +35,7 @@ func (service *Service) CreateUser(user chat.User) (int, error) {
 	return service.repos.CreateUser(user)
 }
 
-func (service *Service) GenerateToken(email, password string) (string, error) {
+func (service *Service) GenerateJWT(email, password string) (string, error) {
 	// определим id пользователя
 	id, err := service.repos.GetUser(email, generatePasswordHash(password))
 	if err != nil {
