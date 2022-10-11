@@ -50,5 +50,10 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	// в url должен быть след. фрагмент: ?title={title_group}
 	router.HandleFunc("/group_chat", h.userIdentityHF(h.getGroup))
 
+	// подключение к групповому чату
+	// пример URL http://localhost:8080/chat_group/?idGroup={id_group}
+	router.Handle("/chat_group/", h.parseEmailAndIdentity(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
+	router.HandleFunc("/chat_group", h.ChatTwoUser)
+
 	return router
 }
