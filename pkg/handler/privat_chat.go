@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	chat "github.com/AlexKomzzz/server"
@@ -97,7 +98,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	// передача истории клиентам
 	if len(historyChat) > 0 {
 		for _, msg := range historyChat {
-
+			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "       ", 1)
 			h.sendMessage(msg, clients) // возможна блокировка
 		}
 	}

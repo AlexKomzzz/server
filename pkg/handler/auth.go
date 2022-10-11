@@ -66,7 +66,7 @@ func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// по данным пользователя заносим в БД и получаем id
-	token, err := h.service.GenerateToken(user.Email, user.Password)
+	token, err := h.service.GenerateJWT(user.Email, user.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -8,111 +8,77 @@ import (
 
 // проверка, создан ли чат между этими пользователями
 func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
+
 	// определяем меньший id пользователя
 	if idUser1 > idUser2 {
 		idUser1, idUser2 = idUser2, idUser1
 	}
+
 	var idChat int
 
-	tx, err := r.db.Begin()
-	if err != nil {
-		tx.Rollback()
-		return -1, fmt.Errorf("error: 'Begin' from CreateChatTwoUser (repos): %v", err)
-	}
-	defer tx.Rollback()
-
 	query := "SELECT id FROM chats WHERE id_user1=$1 AND id_user2=$2"
-	// res, err := r.db.Exec(query, idUser1, idUser2)
-	// if err != nil {
-	// 	return fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
-	// }
 
-	row := tx.QueryRow(query, idUser1, idUser2)
-	err = row.Scan(&idChat)
+	row := r.db.QueryRow(query, idUser1, idUser2)
+	err := row.Scan(&idChat)
 
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 
 			// значит чат не был создан
 			// создаем чат
-
-			//idChat, err = r.UpdateChats(idUser1, idUser2)
-
-			// первый шаг при создании чата между пользователями.
-			// Добавление записи в таблицу chats
-
-			query := "INSERT INTO chats (id_user1, id_user2) VALUES ($1, $2) RETURNING id"
-
-			row := tx.QueryRow(query, idUser1, idUser2)
-			err := row.Scan(&idChat)
+			idChat, err = r.UpdateChats(idUser1, idUser2)
 			if err != nil {
-				tx.Rollback()
-				return -1, fmt.Errorf("error: ошибка при возврате id чата в UpdateChats (repos): %v", err)
-			}
-
-			//создание таблицы для хранения истории чата с другим пользователем
-			// err = r.CreateHistoryChat(idChat)
-
-			// Второй шаг при создании чата между пользователями.
-			// Создание таблицы для хранения истории чата с другим пользователем
-			query = fmt.Sprintf("create table if not exists history_chat%d	(date timestamp, username VARCHAR(255) references users (username) on delete cascade not null,	message VARCHAR(255) not null)", idChat)
-
-			// создание таблицы. Если уже создана то пропуск
-			_, err = tx.Exec(query)
-			if err != nil {
-				tx.Rollback()
-				return -1, fmt.Errorf("error: 'exec' from CreateChat (repos): %v", err)
+				return -1, err
 			}
 
 		} else {
-			tx.Rollback()
 			return -1, fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
 		}
 	}
-
-	// выведем кол-во возвращаемых строк
-	// numRows, err := res.RowsAffected()
-	// if err != nil {
-	// 	return fmt.Errorf("error: 'RowsAffected' from CreateChatTwoUser (repos): %v", err)
-	// }
-
-	// if numRows > 1 {
-	// 	return errors.New("error: больше одного чата с этим пользователем")
-	// } else if numRows == 0 {
-	// 	// значит чат не был создан
-	// 	// создаем чат
-	// 	r.UpdateChats(idUser1, idUser2)
-	// }
-	tx.Commit()
 
 	return idChat, nil
 }
 
 // первый шаг при создании чата между пользователями.
 // Добавление записи в таблицу chats
+// idUser1 < idUser2
 func (r *Repository) UpdateChats(idUser1, idUser2 int) (int, error) {
-	// определяем меньший id пользователя
-	if idUser1 > idUser2 {
-		idUser1, idUser2 = idUser2, idUser1
-	}
 
 	var idChat int
+	tx, err := r.db.Begin()
+	if err != nil {
+		tx.Rollback()
+		return -1, fmt.Errorf("error: 'Begin' from UpdateChats (repos): %v", err)
+	}
+	defer tx.Rollback()
 
 	query := "INSERT INTO chats (id_user1, id_user2) VALUES ($1, $2) RETURNING id"
 
-	row := r.db.QueryRow(query, idUser1, idUser2)
-	err := row.Scan(&idChat)
+	row := tx.QueryRow(query, idUser1, idUser2)
+	err = row.Scan(&idChat)
 	if err != nil {
+		tx.Rollback()
 		return -1, fmt.Errorf("error: ошибка при возврате id чата в UpdateChats (repos): %v", err)
 	}
 
 	//создание таблицы для хранения истории чата с другим пользователем
-	err = r.CreateHistoryChat(idChat)
+	query = fmt.Sprintf("create table if not exists history_chat%d	(date timestamp, username VARCHAR(255) references users (username) on delete cascade not null,	message VARCHAR(255) not null)", idChat)
+
+	// создание таблицы. Если уже создана то пропуск
+	_, err = tx.Exec(query)
 	if err != nil {
-		return -1, err
+		tx.Rollback()
+		return -1, fmt.Errorf("error: 'exec' from UpdateChats (repos): %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		tx.Rollback()
+		return -1, fmt.Errorf("error: 'Commit' from UpdateChats (repos): %v", err)
 	}
 
 	return idChat, nil
+
 }
 
 // Второй шаг при создании чата между пользователями.

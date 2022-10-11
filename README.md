@@ -2,15 +2,13 @@
 ## Описание
   websocket chat:
   1. аутентификация с использованием username
-  hendler на изменение username
+
 
   3. создание чата с пользователем или открыть существующий
-  для того, чтобы определять, с каким пользователем уже есть чат, создадим в таблице users поле с id пользователями, с котороми создан чат
-
+  
   4. создание группы 
-  создать токен и приглашать раздачей токена
 
-  Поправить дату при вызове из БД
+
   Не с первого раза определяет email из URL!!!
 
 ## Docker
@@ -124,7 +122,6 @@ ______________________________________________________
     $ create table if not exists groups
       ( 
         id serial not null unique primary key, 
-        token VARCHAR(255) not null unique,
         title VARCHAR(255) not null,
         admin integer references users (id) on delete cascade not null
       );  
@@ -142,6 +139,6 @@ ______________________________________________________
     $ create table if not exists history_group{id_group}
       (  
         date timestamp,
-        username VARCHAR(255) references users  on delete cascade not null,
+        username VARCHAR(255) references users (username) on delete cascade not null,
         message VARCHAR(255) not null
       );  
