@@ -7,7 +7,7 @@ import (
 )
 
 // проверка, создан ли чат между этими пользователями
-func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
+func (r *Repository) GetIdPrivChat(idUser1, idUser2 int) (int, error) {
 
 	// определяем меньший id пользователя
 	if idUser1 > idUser2 {
@@ -25,12 +25,7 @@ func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
 		if err.Error() == "sql: no rows in result set" {
 
 			// значит чат не был создан
-			// создаем чат
-			idChat, err = r.UpdateChats(idUser1, idUser2)
-			if err != nil {
-				return -1, err
-			}
-
+			return -1, fmt.Errorf("error: не создан чат с этим пользоваиелем CreateChatTwoUser (repos): %v", err)
 		} else {
 			return -1, fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
 		}
@@ -42,7 +37,12 @@ func (r *Repository) CreateChatTwoUser(idUser1, idUser2 int) (int, error) {
 // первый шаг при создании чата между пользователями.
 // Добавление записи в таблицу chats
 // idUser1 < idUser2
-func (r *Repository) UpdateChats(idUser1, idUser2 int) (int, error) {
+func (r *Repository) CreatePrivChat(idUser1, idUser2 int) (int, error) {
+
+	// определяем меньший id пользователя
+	if idUser1 > idUser2 {
+		idUser1, idUser2 = idUser2, idUser1
+	}
 
 	var idChat int
 	tx, err := r.db.Begin()
@@ -157,12 +157,7 @@ func (r *Repository) GetHistoryChat(idChat int) ([]*chat.Message, error) {
 }
 
 // добавление записи в чат
-func (r *Repository) WriteInChat(msg *chat.Message, idUser1, idUser2 int) error {
-
-	idChat, err := r.CreateChatTwoUser(idUser1, idUser2)
-	if err != nil {
-		return err
-	}
+func (r *Repository) WriteInPrivChat(msg *chat.Message, idChat int) error {
 
 	query := fmt.Sprintf("INSERT INTO history_chat%d (date, username, message) VALUES ($1, $2, $3)", idChat)
 	// ничего не возвращаем, используем exec

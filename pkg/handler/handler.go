@@ -59,24 +59,25 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.Handle("/start/", h.userIdentity(http.StripPrefix("/start/", http.FileServer(http.Dir("./web/start/")))))
 	router.HandleFunc("/ws", h.WebsocketHandler)
 
-	// создание приватного чата для двоих
-	// router.Handle("/chat_two/", h.userIdentity(http.StripPrefix("/chat_two/", http.FileServer(http.Dir("./web/chat_two/")))))
-	router.Handle("/chat_two/", h.parseEmailAndIdentity(http.StripPrefix("/chat_two/", http.FileServer(http.Dir("./web/chat_two/")))))
+	// Создание приватного чата по idUser2
+	// в url должен быть след. фрагмент: ?idUser2={id_user2}
+	router.HandleFunc("/chat", h.identityAndParseURLHF(h.getChat))
+
+	// подключение к приватному чата с пользователем по его id
+	// id пользователя передаем в URL
+	// в url должен быть след. фрагмент: ?idUser2={id_user2}
+	// пример URL http://localhost:8080/chat_two?idUser2=3/
+	router.Handle("/chat_priv/", h.identityAndParseURL(http.StripPrefix("/chat_priv/", http.FileServer(http.Dir("./web/chat_priv/")))))
 	router.HandleFunc("/chat", h.ChatTwoUser)
 	// router.HandleFunc("/chat", h.getChat(h.ChatTwoUser))
-	// пример URL http://localhost:8080/chat_two/?email={email_user}
-
-	// Создание чата по email
-	// в url должен быть след. фрагмент: ?email=bobik
-	// router.HandleFunc("/chat", h.userIdentityHF(h.getChat))
 
 	// создание группового чата
 	// в url должен быть след. фрагмент: ?title={title_group}
-	router.HandleFunc("/group_chat", h.userIdentityHF(h.getGroup))
+	router.HandleFunc("/group_chat", h.identityAndParseURLHF(h.getGroup))
 
 	// подключение к групповому чату
 	// пример URL http://localhost:8080/chat_group/?idGroup={id_group}
-	router.Handle("/chat_group/", h.parseIdGroupAndIdentity(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
+	router.Handle("/chat_group/", h.identityAndParseURL(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
 	router.HandleFunc("/chat_group", h.ConnGroupChat)
 
 	return router

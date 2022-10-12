@@ -4,17 +4,34 @@ import (
 	chat "github.com/AlexKomzzz/server"
 )
 
-// Создание чата с клиентом(если его нет), получение истории чата
-func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]*chat.Message, error) {
+// Создание чата с клиентом(если его нет)
+func (service *Service) CreatePrivChat(idUser1, idUser2 int) (int, error) {
 
-	// определение id второго пользователя по email
-	idUser2, err := service.repos.GetUserByEmail(emailUser2)
+	// создание приватного чата
+	idChat, err := service.repos.CreatePrivChat(idUser1, idUser2)
 	if err != nil {
-		return nil, err
+		return -1, err
 	}
 
-	// Cоздание чата между этими пользователями, если еще не создан
-	idChat, err := service.repos.CreateChatTwoUser(idUser1, idUser2)
+	return idChat, nil
+}
+
+// проверка, создан ли чат между пользователями
+func (service *Service) GetIdPrivChat(idUser1, idUser2 int) (int, error) {
+
+	// создание приватного чата
+	idChat, err := service.repos.GetIdPrivChat(idUser1, idUser2)
+	if err != nil {
+		return -1, err
+	}
+
+	return idChat, nil
+}
+
+// получение истории чата
+func (service *Service) GetPrivChat(idUser1, idUser2 int) ([]*chat.Message, error) {
+
+	idChat, err := service.repos.GetIdPrivChat(idUser1, idUser2)
 	if err != nil {
 		return nil, err
 	}
@@ -24,16 +41,10 @@ func (service *Service) GetChat(idUser1 int, emailUser2 string) ([]*chat.Message
 }
 
 // сохранение нового сообщения в чат
-func (service *Service) WriteInChat(msg *chat.Message, idUser1 int, emailUser2 string) error {
-
-	// определение id второго пользователя по email
-	idUser2, err := service.repos.GetUserByEmail(emailUser2)
-	if err != nil {
-		return err
-	}
+func (service *Service) WriteInPrivChat(msg *chat.Message, idChat int) error {
 
 	// сохранение нового сообщения в БД
-	err = service.repos.WriteInChat(msg, idUser1, idUser2)
+	err := service.repos.WriteInPrivChat(msg, idChat)
 	if err != nil {
 		return err
 	}
