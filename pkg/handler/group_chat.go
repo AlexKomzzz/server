@@ -22,7 +22,9 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// получение id текущего пользователя и название группы из контекста
+
 	idUser := h.ctx.Value(keyId).(int)
+	log.Printf("idUser = %d", idUser)
 	title_group := h.ctx.Value(keyTitle).(string)
 
 	// создаем групповой чат в БД и получаем его id
@@ -32,6 +34,7 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	log.Printf("idGroup = %d", idGroup)
 
 	// создаем в мапе clients клиентов массив для записи подключенных клиентов, где ключ будет "group{idGroup}"
 	h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool)
@@ -69,13 +72,15 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln("error: не получен username по id: ", err)
 	}
 
+	log.Printf("username = %s", username)
+
 	// получение истории группового чата из БД
 	historyChat, err := h.service.GetGroup(idGroup)
 	if err != nil {
 		log.Fatalln("error: не получена история чата: ", err)
 	}
 
-	// передача истории клиентам
+	// передача истории клиенту
 	if len(historyChat) > 0 {
 		for _, msg := range historyChat {
 			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "       ", 1)

@@ -29,3 +29,10 @@ func (service *Service) WriteInGroup(msg *chat.Message, idGroup int) error {
 
 	return nil
 }
+
+// получение id всех созданных групповых чатов
+func (service *Service) GetIdGroups() ([]int, error) {
+
+	// получение истории чата пользователей
+	return service.repos.GetIdGroups()
+}
