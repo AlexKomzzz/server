@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -10,17 +9,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type WebClient struct {
-	clients map[*websocket.Conn]bool
-	ctx     context.Context
-}
+// type WebClient struct {
+// 	clients map[string][]*websocket.Conn
+// 	ctx     context.Context
+// }
 
-func NewWebClient(clients map[*websocket.Conn]bool, ctx context.Context) *WebClient {
-	return &WebClient{
-		clients: clients,
-		ctx:     ctx,
-	}
-}
+// func NewWebClient(clients map[string][]*websocket.Conn, ctx context.Context) *WebClient {
+// 	return &WebClient{
+// 		clients: clients,
+// 		ctx:     ctx,
+// 	}
+// }
 
 // объект сообщения
 // type Message struct {
@@ -55,18 +54,21 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	//h.webClient.ctx = context.WithValue(h.webClient.ctx, keyId, 1)
 
 	// вытащим username пользователя из контекста
-	//username := h.webClient.ctx.Value(keyName).(string)
+	// username := h.ctx.Value(keyName).(string)
 
-	//userId := h.webClient.ctx.Value(keyId).(int)
-	//username, err := h.service.GetUsername(userId)
-	username, err := "Alex", nil
+	userId := h.ctx.Value(keyId).(int)
+	username, err := h.service.GetUsername(userId)
+
+	// username, err := "Alex", nil
 	if err != nil {
 		log.Fatalln("error: не получен username по id: ", err)
 	}
 
+	keyConn := "all"
+
 	// сохраняем соединение
-	h.webClient.clients[conn] = true
-	defer delete(h.webClient.clients, conn)
+	h.clients[keyConn][conn] = true
+	defer delete(h.clients[keyConn], conn)
 
 	for {
 		var msg *chat.Message
@@ -74,18 +76,18 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Printf("error: %v", err)
-			delete(h.webClient.clients, conn)
+			delete(h.clients[keyConn], conn)
 			break
 		}
 
 		// в сообщение добавим время и username
-		msg.Date = time.Now().Format(time.Stamp)
+		msg.Date = time.Now().Format("2006-01-02 15:04:05")
 		msg.Username = username
 
 		// сохраняем сообщение в БД
 		//h.service.WriteInChat(msg, )
 
-		go h.MyWriteMessage(msg) // отправляем сообщение
+		go h.sendMessage(msg, keyConn) // отправляем сообщение
 		// go messageHandler(message) // выводим сообщение
 
 		//////////////////////////////messageHandler(msg.Message)
@@ -93,24 +95,24 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) MyWriteMessage(msg *chat.Message) {
+// func (h *Handler) sendMessage(msg *chat.Message, keyClients string) {
 
-	// Grab the next message from the broadcast channel
-	// msg := <-broadcast
-	// отправим сообщение каждому подключенному клиенту
-	for client := range h.webClient.clients {
-		err := client.WriteJSON(msg)
-		if err != nil {
-			log.Printf("error: %v", err)
-			client.Close()
-			delete(h.webClient.clients, client)
-		}
-	}
+// 	// Grab the next message from the broadcast channel
+// 	// msg := <-broadcast
+// 	// отправим сообщение каждому подключенному клиенту
+// 	for client := range h.webClient.clients {
+// 		err := client.WriteJSON(msg)
+// 		if err != nil {
+// 			log.Printf("error: %v", err)
+// 			client.Close()
+// 			delete(h.webClient.clients, client)
+// 		}
+// 	}
 
-	// for conn := range clients {
-	// 	conn.WriteMessage(websocket.TextMessage, message)
-	// }
-}
+// 	// for conn := range clients {
+// 	// 	conn.WriteMessage(websocket.TextMessage, message)
+// 	// }
+// }
 
 /*
 func (clnt *WebClient) WebsocketHandler(w http.ResponseWriter, r *http.Request) {

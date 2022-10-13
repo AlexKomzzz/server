@@ -1,5 +1,7 @@
 package service
 
+import chat "github.com/AlexKomzzz/server"
+
 // создание группового чата
 func (service *Service) CreateGroup(title string, idUser int) (int, error) {
 
@@ -11,7 +13,19 @@ func (service *Service) CreateGroup(title string, idUser int) (int, error) {
 	return idGroup, nil
 }
 
-// подключение к групповому чату, получение истории сообщений
-// func (service *Service) GetGroup(idgroup int, emailUser2 string) ([]*chat.Message, error) {
+// получение истории группового чата
+func (service *Service) GetGroup(idGroup int) ([]*chat.Message, error) {
 
-// }
+	// получение истории чата пользователей
+	return service.repos.GetHistoryGroup(idGroup)
+}
+
+// сохранение нового сообщения в чат
+func (service *Service) WriteInGroup(msg *chat.Message, idGroup int) error {
+	err := service.repos.WriteInGroupChat(msg, idGroup)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

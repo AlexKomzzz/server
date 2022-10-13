@@ -65,8 +65,24 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 	return idGroup, nil
 }
 
+// выгрузка истории группового чата
+func (r *Repository) GetHistoryGroup(idGroup int) ([]*chat.Message, error) {
+
+	historyChat := make([]*chat.Message, 0)
+
+	query := fmt.Sprintf("SELECT * FROM history_group%d", idGroup)
+	err := r.db.Select(&historyChat, query)
+	if err != nil {
+		if err.Error() != "sql: no rows in result set" {
+			return nil, fmt.Errorf("error: 'select' from GetHistoryChat (repos): %v", err)
+		}
+	}
+
+	return historyChat, nil
+}
+
 // добавление записи в групповой чат
-func (r *Repository) WriteInGroupChat(msg *chat.Message, idUser, idGroup int) error {
+func (r *Repository) WriteInGroupChat(msg *chat.Message, idGroup int) error {
 
 	query := fmt.Sprintf("INSERT INTO history_group%d (date, username, message) VALUES ($1, $2, $3)", idGroup)
 	// ничего не возвращаем, используем exec
