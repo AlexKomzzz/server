@@ -34,7 +34,7 @@ func (h *Handler) getGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// создаем в мапе clients клиентов массив для записи подключенных клиентов, где ключ будет "group{idGroup}"
-	h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool, 0)
+	h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool)
 
 	// отправим клиенту id группового чата
 	w.Header().Set("Content-Type", "application/json")

@@ -25,7 +25,11 @@ func (r *Repository) GetIdPrivChat(idUser1, idUser2 int) (int, error) {
 		if err.Error() == "sql: no rows in result set" {
 
 			// значит чат не был создан
-			return -1, fmt.Errorf("error: не создан чат с этим пользоваиелем CreateChatTwoUser (repos): %v", err)
+			idChat, err = r.CreatePrivChat(idUser1, idUser2)
+			if err != nil {
+				return -1, fmt.Errorf("%s", err)
+			}
+
 		} else {
 			return -1, fmt.Errorf("error: 'exec' from CreateChatTwoUser (repos): %v", err)
 		}

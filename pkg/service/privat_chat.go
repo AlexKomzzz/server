@@ -5,7 +5,7 @@ import (
 )
 
 // Создание чата с клиентом(если его нет)
-func (service *Service) CreatePrivChat(idUser1, idUser2 int) (int, error) {
+/*func (service *Service) CreatePrivChat(idUser1, idUser2 int) (int, error) {
 
 	// создание приватного чата
 	idChat, err := service.repos.CreatePrivChat(idUser1, idUser2)
@@ -14,10 +14,10 @@ func (service *Service) CreatePrivChat(idUser1, idUser2 int) (int, error) {
 	}
 
 	return idChat, nil
-}
+}*/
 
-// проверка, создан ли чат между пользователями
-func (service *Service) GetIdPrivChat(idUser1, idUser2 int) (int, error) {
+// Создание чата с клиентом(если его нет) и проверка, создан ли чат между пользователями
+func (service *Service) CreateAndGetIdPrivChat(idUser1, idUser2 int) (int, error) {
 
 	// создание приватного чата
 	idChat, err := service.repos.GetIdPrivChat(idUser1, idUser2)

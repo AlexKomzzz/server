@@ -13,7 +13,7 @@ import (
 
 type myCtx string
 
-// var keyName, keyId myCtx = "username", "userId"
+// keyId, keyIdUser2, keyIdGroup, keyIdChat, keyTitle myCtx = "userId", "idUser2", "idGroup", "idChat", "title"
 var keyId, keyIdUser2, keyIdGroup, keyIdChat, keyTitle myCtx = "userId", "idUser2", "idGroup", "idChat", "title"
 
 // поиск email в URL и проверка идентификации
@@ -54,16 +54,6 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 
 		// запись idUser в контекст
 		h.ctx = context.WithValue(h.ctx, keyId, userId)
-
-		// username, err := h.service.GetUsername(userId)
-		// if err != nil {
-		// 	http.Error(w, err.Error(), http.StatusUnauthorized)
-		// 	return
-		// }
-
-		// // запись username в контекст
-		// h.webClient.ctx = context.WithValue(h.webClient.ctx, keyName, username)
-		//c.Set("userId", userId)
 
 		next.ServeHTTP(w, r)
 	})
@@ -138,7 +128,94 @@ func (h *Handler) parseEmailHF(next http.HandlerFunc) http.HandlerFunc {
 
 // парсинг URL для Handler
 func (h *Handler) parseURL(next http.Handler) http.Handler {
-	return h.parseURLHF(next.ServeHTTP)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// выделим idGroup из url
+		// получим мапу из параметров указанных в url с помощью "?"
+		set, err := url.ParseQuery(r.URL.RawQuery)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error: invalid URL: %s", err).Error(), http.StatusBadRequest)
+			return
+		}
+
+		// если в URL передан фрагмент idGroup запишем его в контекст
+		if _, ok := set["idGroup"]; ok {
+
+			idGroupStr := set["idGroup"][0]
+
+			// конвертация idGroup из стороковго типа в целочисленный
+			idGroup, err := strconv.Atoi(idGroupStr)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error: invalid idGroup: %s", err).Error(), http.StatusBadRequest)
+				return
+			}
+
+			// запись idGroup в контекст
+			h.ctx = context.WithValue(h.ctx, keyIdGroup, idGroup)
+
+		} else {
+			// сбросим значение в контексте
+			h.ctx = context.WithValue(h.ctx, keyIdGroup, nil)
+		}
+
+		// если в URL передан фрагмент email запишем его в контекст
+		if _, ok := set["idUser2"]; ok {
+
+			idUser2Str := set["idUser2"][0]
+
+			// конвертация idUser2 из стороковго типа в целочисленный
+			idUser2, err := strconv.Atoi(idUser2Str)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error: invalid idUser2 from URL: %s", err).Error(), http.StatusBadRequest)
+				return
+			}
+
+			// запись idGroup в контекст
+			h.ctx = context.WithValue(h.ctx, keyIdUser2, idUser2)
+
+			log.Printf("idUser2 определен = %d\n", idUser2)
+		} else {
+			// сбросим значение в контексте
+			h.ctx = context.WithValue(h.ctx, keyId, nil)
+		}
+
+		// если в URL передан фрагмент idChat запишем его в контекст
+		if _, ok := set["idChat"]; ok {
+
+			idChatStr := set["idChat"][0]
+
+			// конвертация idChat из стороковго типа в целочисленный
+			idChat, err := strconv.Atoi(idChatStr)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error: invalid idChat from URL: %s", err).Error(), http.StatusBadRequest)
+				return
+			}
+
+			// запись idGroup в контекст
+			h.ctx = context.WithValue(h.ctx, keyIdChat, idChat)
+
+			log.Printf("idChat определен = %d\n", idChat)
+		} else {
+			// сбросим значение в контексте
+			h.ctx = context.WithValue(h.ctx, keyIdChat, nil)
+		}
+
+		// если в URL передан фрагмент title запишем его в контекст
+		if _, ok := set["title"]; ok {
+
+			title := set["title"][0]
+
+			// запись idGroup в контекст
+			h.ctx = context.WithValue(h.ctx, keyTitle, title)
+
+			log.Printf("title определен = %s\n", title)
+		} else {
+			// сбросим значение в контексте
+			h.ctx = context.WithValue(h.ctx, keyTitle, nil)
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // парсинг URL для HandkerFunc
@@ -168,7 +245,7 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 			// запись idGroup в контекст
 			h.ctx = context.WithValue(h.ctx, keyIdGroup, idGroup)
 
-			log.Println("idGroup определен")
+			log.Printf("idGroup определен = %d\n", idGroup)
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyIdGroup, nil)
@@ -177,12 +254,19 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 		// если в URL передан фрагмент email запишем его в контекст
 		if _, ok := set["idUser2"]; ok {
 
-			idUser2 := set["idUser2"][0]
+			idUser2Str := set["idUser2"][0]
+
+			// конвертация idUser2 из стороковго типа в целочисленный
+			idUser2, err := strconv.Atoi(idUser2Str)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error: invalid idUser2 from URL: %s", err).Error(), http.StatusBadRequest)
+				return
+			}
 
 			// запись idGroup в контекст
 			h.ctx = context.WithValue(h.ctx, keyIdUser2, idUser2)
 
-			log.Println("idUser2 определен")
+			log.Printf("idUser2 определен = %d\n", idUser2)
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyId, nil)
@@ -191,12 +275,19 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 		// если в URL передан фрагмент idChat запишем его в контекст
 		if _, ok := set["idChat"]; ok {
 
-			idChat := set["idChat"][0]
+			idChatStr := set["idChat"][0]
+
+			// конвертация idChat из стороковго типа в целочисленный
+			idChat, err := strconv.Atoi(idChatStr)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error: invalid idChat from URL: %s", err).Error(), http.StatusBadRequest)
+				return
+			}
 
 			// запись idGroup в контекст
 			h.ctx = context.WithValue(h.ctx, keyIdChat, idChat)
 
-			log.Println("idChat определен")
+			log.Printf("idChat определен = %d\n", idChat)
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyIdChat, nil)
@@ -205,23 +296,34 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 		// если в URL передан фрагмент title запишем его в контекст
 		if _, ok := set["title"]; ok {
 
-			idChat := set["title"][0]
+			title := set["title"][0]
 
 			// запись idGroup в контекст
-			h.ctx = context.WithValue(h.ctx, keyTitle, idChat)
+			h.ctx = context.WithValue(h.ctx, keyTitle, title)
 
-			log.Println("title определен")
+			log.Printf("title определен = %s\n", title)
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyTitle, nil)
 		}
 
-		// if idGroupStr == "" {
-		// 	log.Println("Значение idGroup не передано в URL")
-		// 	http.Error(w, "error: значение idGroup не передано в URL", http.StatusBadRequest)
-		// 	return
-		// }
-
 		next(w, r)
 	}
+}
+
+// сравнение idUser1 и idUser2
+func (h *Handler) compareIdUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// получение id текущего пользователя из контекста
+		idUser1 := h.ctx.Value(keyId).(int)
+
+		// получение idUser2 пользователя, с которым создаем чат, из контекста
+		idUser2 := h.ctx.Value(keyIdUser2).(int)
+
+		if idUser1 == idUser2 {
+			h.newErrorResponse(w, r, http.StatusBadRequest, "id пользователя, переданный в URL, совпадает с собственным id")
+		}
+		next.ServeHTTP(w, r)
+	})
 }

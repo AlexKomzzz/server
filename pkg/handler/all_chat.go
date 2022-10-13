@@ -58,6 +58,7 @@ func (h *Handler) WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	userId := h.ctx.Value(keyId).(int)
 	username, err := h.service.GetUsername(userId)
+
 	// username, err := "Alex", nil
 	if err != nil {
 		log.Fatalln("error: не получен username по id: ", err)

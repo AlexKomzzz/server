@@ -17,7 +17,7 @@ type HistoryResp struct {
 
 // создание приватного чата по id пользователей
 // возвращает id созданного чата
-func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getPrivChat(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "POST" {
 		http.Error(w, "invalid method: no POST", http.StatusBadRequest)
@@ -27,16 +27,16 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 	// вытащим id пользователя из контекста
 	idUser1 := h.ctx.Value(keyId).(int)
 	idUser2 := h.ctx.Value(keyIdUser2).(int)
-
+	// idUser2 := 3
 	// создание чата с пользователем
-	idChat, err := h.service.CreatePrivChat(idUser1, idUser2)
+	idChat, err := h.service.CreateAndGetIdPrivChat(idUser1, idUser2)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	// создаем в мапе clients клиентов мапу для записи подключенных клиентов, где ключ будет "chat{idChat}"
-	h.clients[fmt.Sprintf("chat%d", idChat)] = make(map[*websocket.Conn]bool, 0)
+	h.clients[fmt.Sprintf("chat%d", idChat)] = make(map[*websocket.Conn]bool)
 
 	// http ответ
 	w.Header().Set("Content-Type", "application/json")
@@ -44,7 +44,7 @@ func (h *Handler) getChat(w http.ResponseWriter, r *http.Request) {
 }
 
 // открываем соединение, в цикле читаем сообщения и парсим в структуру
-func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) connPrivChat(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -65,17 +65,24 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	log.Println("id = ", idUser1)
 	// получение idUser2 пользователя, с которым создаем чат, из контекста
 	idUser2 := h.ctx.Value(keyIdUser2).(int)
+	log.Println("idUser2 = ", idUser2)
 
 	// получение id приватного чата, к которому осуществилось подключение
-	idChat, err := h.service.GetIdPrivChat(idUser1, idUser2)
+	idChat, err := h.service.CreateAndGetIdPrivChat(idUser1, idUser2)
 	if err != nil {
 		log.Fatalln("error: не получен idChat: ", err)
 	}
+	log.Println("idChat = ", idChat)
 
 	keyClients := fmt.Sprintf("chat%d", idChat)
 
+	if h.clients[keyClients] == nil {
+		//h.clients[keyClients] = make(map[*websocket.Conn]bool)
+		log.Fatalln("error: чат не инициализирован функцией Create: ", err)
+	}
 	// сохраняем соединение
 	h.clients[keyClients][conn] = true
+
 	defer delete(h.clients[keyClients], conn)
 
 	// получение username по id
@@ -83,6 +90,7 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalln("error: не получен username по id: ", err)
 	}
+	log.Println("username = ", username)
 
 	// получение истории чата из БД
 	historyChat, err := h.service.GetPrivChat(idUser1, idUser2)
@@ -96,11 +104,18 @@ func (h *Handler) ChatTwoUser(w http.ResponseWriter, r *http.Request) {
 	// 	Body:     "Hello",
 	// }}
 
-	// передача истории клиентам
+	// передача истории клиенту
 	if len(historyChat) > 0 {
 		for _, msg := range historyChat {
-			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "       ", 1)
-			h.sendMessage(msg, keyClients) // возможна блокировка
+			msg.Date = strings.Replace(strings.Replace(msg.Date, "T", " ", 1), "Z", "\t", 1)
+
+			// отправка истории клиенту
+			err := conn.WriteJSON(msg)
+			if err != nil {
+				log.Printf("error: %v", err)
+				conn.Close()
+				delete(h.clients[keyClients], conn)
+			}
 		}
 	}
 
