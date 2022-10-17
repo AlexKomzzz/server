@@ -86,6 +86,7 @@ func (h *Handler) userIdentityHF(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		log.Printf("idUser = %d", userId)
 		// запись idUser в контекст
 		h.ctx = context.WithValue(h.ctx, keyId, userId)
 
@@ -176,7 +177,7 @@ func (h *Handler) parseURL(next http.Handler) http.Handler {
 			log.Printf("idUser2 определен = %d\n", idUser2)
 		} else {
 			// сбросим значение в контексте
-			h.ctx = context.WithValue(h.ctx, keyId, nil)
+			h.ctx = context.WithValue(h.ctx, keyIdUser2, nil)
 		}
 
 		// если в URL передан фрагмент idChat запишем его в контекст
@@ -245,7 +246,6 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 			// запись idGroup в контекст
 			h.ctx = context.WithValue(h.ctx, keyIdGroup, idGroup)
 
-			log.Printf("idGroup определен = %d\n", idGroup)
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyIdGroup, nil)
@@ -269,7 +269,7 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 			log.Printf("idUser2 определен = %d\n", idUser2)
 		} else {
 			// сбросим значение в контексте
-			h.ctx = context.WithValue(h.ctx, keyId, nil)
+			h.ctx = context.WithValue(h.ctx, keyIdUser2, nil)
 		}
 
 		// если в URL передан фрагмент idChat запишем его в контекст

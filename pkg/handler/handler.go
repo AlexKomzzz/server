@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -39,10 +40,28 @@ func (h *Handler) sendMessage(msg *chat.Message, keyClients string) {
 	}
 }
 
+// инициализация созданных чатов и групп в мапе
+func (h *Handler) initClientsByChats() {
+
+	setIdGroups, err := h.service.GetIdGroups()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, idGroup := range setIdGroups {
+		// создаем в мапе clients мапы для записи подключенных клиентов, где ключ будет "group{idGroup}"
+		h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool)
+
+	}
+}
+
 func (h *Handler) InitRouter() *http.ServeMux {
 
 	// создаем в мапе clients массив для записи подключенных клиентов ОБЩЕГО чата, где ключ будет "all"
 	h.clients["all"] = make(map[*websocket.Conn]bool, 0)
+
+	// инициализация созданных чатов и групп в мапе
+	h.initClientsByChats()
 
 	router := http.NewServeMux()
 
@@ -76,7 +95,7 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.HandleFunc("/new_group", h.identityAndParseURLHF(h.getGroup))
 
 	// подключение к групповому чату
-	// пример URL http://localhost:8080/chat_group/?idGroup={id_group}
+	// пример URL http://localhost:8080/chat_group?idGroup={id_group}
 	router.Handle("/chat_group/", h.identityAndParseURL(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
 	router.HandleFunc("/chat_group", h.ConnGroupChat)
 
