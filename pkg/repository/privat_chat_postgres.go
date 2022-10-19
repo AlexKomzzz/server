@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"log"
 
 	chat "github.com/AlexKomzzz/server"
 )
@@ -36,6 +37,32 @@ func (r *Repository) GetIdPrivChat(idUser1, idUser2 int) (int, error) {
 	}
 
 	return idChat, nil
+}
+
+// возвращает id созданных приватных чатов
+func (r *Repository) GetIdsPrivChats() ([]int, error) {
+
+	idChats := make([]int, 0)
+
+	// добавление параметров новой группы в таблицу groups
+	query := "SELECT id FROM chats"
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error: 'Query' from GetIdsPrivChats (repos): %v", err)
+	}
+	defer rows.Close()
+
+	var idChat int
+
+	for rows.Next() {
+		if err := rows.Scan(&idChat); err != nil {
+			return nil, fmt.Errorf("error: 'Scan' from GetIdsPrivChats (repos): %v", err)
+		}
+		idChats = append(idChats, idChat)
+	}
+	log.Println("выгрузка всех id приватных чатов:\t", idChats)
+
+	return idChats, nil
 }
 
 // первый шаг при создании чата между пользователями.

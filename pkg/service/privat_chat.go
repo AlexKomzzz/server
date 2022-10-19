@@ -51,3 +51,10 @@ func (service *Service) WriteInPrivChat(msg *chat.Message, idChat int) error {
 
 	return nil
 }
+
+// получение id всех созданных приватных чатов
+func (service *Service) GetIdsPrivChats() ([]int, error) {
+
+	// получение истории чата пользователей
+	return service.repos.GetIdsPrivChats()
+}

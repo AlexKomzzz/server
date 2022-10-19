@@ -52,6 +52,7 @@ func (h *Handler) userIdentity(next http.Handler) http.Handler {
 			return
 		}
 
+		log.Printf("запись id = %d\n", userId)
 		// запись idUser в контекст
 		h.ctx = context.WithValue(h.ctx, keyId, userId)
 
@@ -153,6 +154,7 @@ func (h *Handler) parseURL(next http.Handler) http.Handler {
 
 			// запись idGroup в контекст
 			h.ctx = context.WithValue(h.ctx, keyIdGroup, idGroup)
+			log.Printf("idGroup определен = %d\n", idGroup)
 
 		} else {
 			// сбросим значение в контексте
@@ -167,6 +169,7 @@ func (h *Handler) parseURL(next http.Handler) http.Handler {
 			// конвертация idUser2 из стороковго типа в целочисленный
 			idUser2, err := strconv.Atoi(idUser2Str)
 			if err != nil {
+				log.Println("invalid idUser2 from URL")
 				http.Error(w, fmt.Errorf("error: invalid idUser2 from URL: %s", err).Error(), http.StatusBadRequest)
 				return
 			}
@@ -178,6 +181,7 @@ func (h *Handler) parseURL(next http.Handler) http.Handler {
 		} else {
 			// сбросим значение в контексте
 			h.ctx = context.WithValue(h.ctx, keyIdUser2, nil)
+			log.Println("idUser2 НЕ определен")
 		}
 
 		// если в URL передан фрагмент idChat запишем его в контекст
@@ -315,11 +319,14 @@ func (h *Handler) parseURLHF(next http.HandlerFunc) http.HandlerFunc {
 func (h *Handler) compareIdUser(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		// log.Println("получение id")
 		// получение id текущего пользователя из контекста
 		idUser1 := h.ctx.Value(keyId).(int)
+		log.Printf("получен id = %d\n", idUser1)
 
 		// получение idUser2 пользователя, с которым создаем чат, из контекста
 		idUser2 := h.ctx.Value(keyIdUser2).(int)
+		log.Printf("получен id2 = %d\n", idUser2)
 
 		if idUser1 == idUser2 {
 			h.newErrorResponse(w, r, http.StatusBadRequest, "id пользователя, переданный в URL, совпадает с собственным id")

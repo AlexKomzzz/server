@@ -56,9 +56,10 @@ func (h *Handler) ConnGroupChat(w http.ResponseWriter, r *http.Request) {
 
 	// получение id текущего пользователя из контекста
 	idUser := h.ctx.Value(keyId).(int)
-
+	log.Println("получение id = ", idUser)
 	// получение id группового чата, к которому осуществилось подключение
 	idGroup := h.ctx.Value(keyIdGroup).(int)
+	log.Println("получение idGroup = ", idGroup)
 
 	keyClients := fmt.Sprintf("group%d", idGroup)
 

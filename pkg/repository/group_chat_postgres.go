@@ -68,20 +68,25 @@ func (r *Repository) CreateGroup(title string, idAdmin int) (int, error) {
 // возвращает id созданных групп
 func (r *Repository) GetIdGroups() ([]int, error) {
 
-	var idGroups []int
+	idGroups := make([]int, 0)
 
 	// добавление параметров новой группы в таблицу groups
 	query := "SELECT id FROM groups"
-	row, err := r.db.Query(query)
+	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error: 'Query' from GetIdGroups (repos): %v", err)
 	}
+	defer rows.Close()
 
-	if err := row.Scan(&idGroups); err != nil {
-		return nil, fmt.Errorf("error: 'Scan' from GetIdGroups (repos): %v", err)
+	var idGroup int
+
+	for rows.Next() {
+		if err := rows.Scan(&idGroup); err != nil {
+			return nil, fmt.Errorf("error: 'Scan' from GetIdGroups (repos): %v", err)
+		}
+		idGroups = append(idGroups, idGroup)
 	}
-
-	log.Println("выгрузка всех id групповых чатов\t", idGroups)
+	log.Println("выгрузка всех id групповых чатов:\t", idGroups)
 
 	return idGroups, nil
 }

@@ -43,6 +43,7 @@ func (h *Handler) sendMessage(msg *chat.Message, keyClients string) {
 // инициализация созданных чатов и групп в мапе
 func (h *Handler) initClientsByChats() {
 
+	// получение id всех созданных групп
 	setIdGroups, err := h.service.GetIdGroups()
 	if err != nil {
 		log.Fatal(err)
@@ -51,6 +52,18 @@ func (h *Handler) initClientsByChats() {
 	for _, idGroup := range setIdGroups {
 		// создаем в мапе clients мапы для записи подключенных клиентов, где ключ будет "group{idGroup}"
 		h.clients[fmt.Sprintf("group%d", idGroup)] = make(map[*websocket.Conn]bool)
+
+	}
+
+	// получение id всех созданных групп
+	setIdsPrivChats, err := h.service.GetIdsPrivChats()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, idChat := range setIdsPrivChats {
+		// создаем в мапе clients мапы для записи подключенных клиентов, где ключ будет "chat{idChat}"
+		h.clients[fmt.Sprintf("chat%d", idChat)] = make(map[*websocket.Conn]bool)
 
 	}
 }
@@ -85,7 +98,7 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	// подключение к приватному чата с пользователем по его id
 	// id пользователя передаем в URL
 	// в url должен быть след. фрагмент: ?idUser2={id_user2}
-	// пример URL http://localhost:8080/chat_priv?idUser2=3/
+	// пример URL http://localhost:8080/chat_priv/?idUser2=3
 	router.Handle("/chat_priv/", h.identityAndParseURL(h.compareIdUser(http.StripPrefix("/chat_priv/", http.FileServer(http.Dir("./web/chat_priv/"))))))
 	router.HandleFunc("/chat", h.connPrivChat)
 	// router.HandleFunc("/chat", h.getChat(h.ChatTwoUser))
@@ -95,7 +108,7 @@ func (h *Handler) InitRouter() *http.ServeMux {
 	router.HandleFunc("/new_group", h.identityAndParseURLHF(h.getGroup))
 
 	// подключение к групповому чату
-	// пример URL http://localhost:8080/chat_group?idGroup={id_group}
+	// пример URL http://localhost:8080/chat_group/?idGroup={id_group}
 	router.Handle("/chat_group/", h.identityAndParseURL(http.StripPrefix("/chat_group/", http.FileServer(http.Dir("./web/chat_group/")))))
 	router.HandleFunc("/chat_group", h.ConnGroupChat)
 
